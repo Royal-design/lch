@@ -38,17 +38,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Create user in Supabase Auth
-    const { data: authData, error: authError } =
-      await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          name,
-          gender,
-          location,
-        },
-      })
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name, gender, location },
+      },
+    })
 
     if (authError || !authData?.user) {
       return NextResponse.json(

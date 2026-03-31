@@ -31,20 +31,18 @@ export default function DashboardPage() {
     )
   }
 
-  if (!user) {
-    return null
-  }
-
-  const userName = user.user_metadata?.name || user.email || "User"
+  if (!user) return null
 
   return (
     <div className="flex min-h-svh flex-col">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <h1 className="text-xl font-bold">MyApp</h1>
+
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">{user.email}</span>
+
             <Button variant="outline" size="sm" onClick={signOut}>
               Sign Out
             </Button>
@@ -52,22 +50,20 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="container mx-auto flex-1 px-4 py-8">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Welcome Card */}
+          {/* Welcome */}
           <Card className="md:col-span-2 lg:col-span-3">
             <CardHeader>
-              <CardTitle className="text-2xl">
-                Welcome back, {userName}! 👋
-              </CardTitle>
+              <CardTitle className="text-2xl">Welcome 👋</CardTitle>
               <CardDescription>
-                {`You're successfully logged in. Here's your dashboard.`}
+                {`  You're successfully logged in. Here's your dashboard.`}
               </CardDescription>
             </CardHeader>
           </Card>
 
-          {/* Stats Cards */}
+          {/* Stats */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">
