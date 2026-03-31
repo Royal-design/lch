@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import {
@@ -57,8 +58,7 @@ export function RegisterForm() {
     try {
       setLoading(true)
 
-      // ❗ remove confirmPassword before sending
-      const { confirmPassword, ...payload } = data
+      const { confirmPassword: _confirmPassword, ...payload } = data
 
       await axios.post("/api/auth/register", payload)
 

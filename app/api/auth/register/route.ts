@@ -1,13 +1,19 @@
-import { supabaseServer } from "@/lib/supabase-server"
-import { registerSchema } from "@/schemas/auth"
+import { createClient } from "@/lib/supabase/server-route"
+import { registerSchema2 } from "@/schemas/auth"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(req: NextRequest) {
   try {
+    // Create response FIRST (required for cookie handling)
+    const res = NextResponse.next()
+
+    // Create Supabase client (API route version)
+    const supabase = createClient(req, res)
+
     const body = await req.json()
 
     // Validate request body
-    const validationResult = registerSchema.safeParse(body)
+    const validationResult = registerSchema2.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
         { error: validationResult.error.issues[0].message },
@@ -17,12 +23,12 @@ export async function POST(req: NextRequest) {
 
     const { name, gender, location, email, password } = validationResult.data
 
-    // Check if user already exists
-    const { data: existingUser, error: existingError } = await supabaseServer
+    //Check if user exists (not required, but allowed)
+    const { data: existingUser } = await supabase
       .from("users")
       .select("id")
       .eq("email", email)
-      .single()
+      .maybeSingle()
 
     if (existingUser) {
       return NextResponse.json(
@@ -33,10 +39,10 @@ export async function POST(req: NextRequest) {
 
     // Create user in Supabase Auth
     const { data: authData, error: authError } =
-      await supabaseServer.auth.admin.createUser({
+      await supabase.auth.admin.createUser({
         email,
         password,
-        email_confirm: true, // Auto-confirm email (disable for production if you want email verification)
+        email_confirm: true,
         user_metadata: {
           name,
           gender,
@@ -44,12 +50,15 @@ export async function POST(req: NextRequest) {
         },
       })
 
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 500 })
+    if (authError || !authData?.user) {
+      return NextResponse.json(
+        { error: authError?.message || "Failed to create user" },
+        { status: 500 }
+      )
     }
 
-    // Create user profile in database
-    const { data: profileData, error: profileError } = await supabaseServer
+    // Create user profile in your table
+    const { data: profileData, error: profileError } = await supabase
       .from("users")
       .insert({
         id: authData.user.id,
@@ -62,14 +71,16 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (profileError) {
-      // Rollback: delete auth user if profile creation fails
-      await supabaseServer.auth.admin.deleteUser(authData.user.id)
+      // Rollback: delete auth user if profile fails
+      await supabase.auth.admin.deleteUser(authData.user.id)
+
       return NextResponse.json(
         { error: "Failed to create user profile" },
         { status: 500 }
       )
     }
 
+    // Success response
     return NextResponse.json(
       {
         message: "Account created successfully",

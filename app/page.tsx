@@ -1,6 +1,5 @@
 "use client"
 
-import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
@@ -13,9 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { useAuthStore } from "@/store/useAuthStore"
 
 export default function Home() {
-  const { user, loading } = useAuth()
+  const { user, loading } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {

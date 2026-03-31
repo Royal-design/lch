@@ -1,6 +1,5 @@
 "use client"
 
-import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
@@ -12,9 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { useAuthStore } from "@/store/useAuthStore"
 
 export default function DashboardPage() {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading, signOut } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function DashboardPage() {
                 Welcome back, {userName}! 👋
               </CardTitle>
               <CardDescription>
-                You're successfully logged in. Here's your dashboard.
+                {`You're successfully logged in. Here's your dashboard.`}
               </CardDescription>
             </CardHeader>
           </Card>

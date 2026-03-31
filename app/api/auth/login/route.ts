@@ -1,12 +1,15 @@
-import { supabaseServer } from "@/lib/supabase-server"
+import { createClient } from "@/lib/supabase/server-route"
 import { loginSchema } from "@/schemas/auth"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(req: NextRequest) {
   try {
+    const res = NextResponse.next()
+
+    const supabase = createClient(req, res)
+
     const body = await req.json()
 
-    // Validate request body
     const validationResult = loginSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
@@ -17,8 +20,7 @@ export async function POST(req: NextRequest) {
 
     const { email, password } = validationResult.data
 
-    // Sign in with Supabase Auth
-    const { data, error } = await supabaseServer.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -30,8 +32,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Fetch user profile
-    const { data: profile, error: profileError } = await supabaseServer
+    const { data: profile, error: profileError } = await supabase
       .from("users")
       .select("id, name, email, gender, location")
       .eq("id", data.user.id)
@@ -44,29 +45,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Create response with session cookie
     const response = NextResponse.json({
       message: "Login successful",
       user: profile,
     })
-
-    // Set session cookies
-    if (data.session) {
-      response.cookies.set("sb-access-token", data.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: data.session.expires_in || 3600,
-      })
-      response.cookies.set("sb-refresh-token", data.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 604800, // 7 days
-      })
-    }
 
     return response
   } catch (error) {
