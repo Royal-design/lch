@@ -1,6 +1,7 @@
 import { Geist_Mono, Inter } from "next/font/google"
 
 import { Toaster } from "@/components/ui/sonner"
+import { AuthProvider } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
 import "./globals.css"
 
@@ -28,7 +29,9 @@ export default function RootLayout({
       )}
     >
       <body>
-        <main>{children}</main>
+        <AuthProvider>
+          <main>{children}</main>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

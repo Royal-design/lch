@@ -79,7 +79,11 @@ export function LoginForm() {
             Or continue with
           </FieldSeparator>
 
-          <form id="login-form" onSubmit={form.handleSubmit(onSubmit)}>
+          <form
+            id="login-form"
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="mt-4"
+          >
             <FieldGroup>
               {/* EMAIL */}
               <Controller
@@ -130,7 +134,7 @@ export function LoginForm() {
               />
 
               {/* BUTTON */}
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} className="p-5">
                 {loading ? "Logging in..." : "Login"}
               </Button>
 
