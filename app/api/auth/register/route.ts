@@ -1,11 +1,10 @@
-import { createClient } from "@/lib/supabase/server-route"
+import { createClient } from "@/lib/supabase/server"
 import { registerSchema2 } from "@/schemas/auth"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(req: NextRequest) {
   try {
-    const res = NextResponse.next()
-    const supabase = createClient(req, res)
+    const supabase = await createClient()
 
     const body = await req.json()
 

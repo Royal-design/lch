@@ -20,6 +20,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { supabase } from "@/lib/supabase/client"
 import { loginSchema, type LoginSchema } from "@/schemas/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
 import axios, { AxiosError } from "axios"
@@ -49,6 +50,8 @@ export function LoginForm() {
 
       await axios.post("/api/auth/login", data)
 
+      await supabase.auth.getSession()
+      router.refresh()
       router.push("/dashboard")
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>
@@ -80,6 +83,7 @@ export function LoginForm() {
           </FieldSeparator>
 
           <form
+            method="POST"
             id="login-form"
             onSubmit={form.handleSubmit(onSubmit)}
             className="mt-4"

@@ -1,8 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -15,13 +12,6 @@ import { useAuthStore } from "@/store/useAuthStore"
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuthStore()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login")
-    }
-  }, [user, loading, router])
 
   if (loading) {
     return (
