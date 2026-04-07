@@ -5,8 +5,10 @@ import { Menu, X } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import MaxWidthWrapper from "./MaxWidthWrapper"
+import { useAuthStore } from "@/store/useAuthStore"
 
 export default function Navbar() {
+  const { user } = useAuthStore()
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -58,12 +60,33 @@ export default function Navbar() {
             <div className="h-6 w-px bg-emerald-100" />
 
             <div className="flex items-center gap-3">
-              <Button asChild variant="ghost" size="sm" className="font-medium hover:text-emerald-600">
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button asChild size="sm" className="rounded-full bg-emerald-600 px-5 font-semibold hover:bg-emerald-700 active:scale-95 transition-all">
-                <Link href="/register">Get Started</Link>
-              </Button>
+              {user ? (
+                <Button
+                  asChild
+                  size="sm"
+                  className="rounded-full bg-emerald-600 px-5 font-semibold hover:bg-emerald-700 active:scale-95 transition-all"
+                >
+                  <Link href="/dashboard">Dashboard</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="font-medium hover:text-emerald-600"
+                  >
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="sm"
+                    className="rounded-full bg-emerald-600 px-5 font-semibold hover:bg-emerald-700 active:scale-95 transition-all"
+                  >
+                    <Link href="/register">Get Started</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -98,12 +121,33 @@ export default function Navbar() {
               </Link>
             ))}
             <hr className="border-emerald-50" />
-            <Button asChild variant="ghost" className="justify-start px-4 text-emerald-600">
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button asChild className="rounded-full bg-emerald-600 font-semibold hover:bg-emerald-700">
-              <Link href="/register">Get Started</Link>
-            </Button>
+            {user ? (
+              <Button
+                asChild
+                className="rounded-full bg-emerald-600 font-semibold hover:bg-emerald-700"
+                onClick={() => setIsOpen(false)}
+              >
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="justify-start px-4 text-emerald-600"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button
+                  asChild
+                  className="rounded-full bg-emerald-600 font-semibold hover:bg-emerald-700"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Link href="/register">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
