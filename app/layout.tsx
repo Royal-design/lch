@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://leenah.app",
+    url: "https://leenah-ch.vercel.app",
     title: "Leenah Contribution Home - Save Together. Grow Together.",
     description: "The modern way to manage group contributions and savings.",
     siteName: "Leenah Contribution Home",
