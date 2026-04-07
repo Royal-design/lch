@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
       password,
       options: {
         data: { name, gender, location },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
       },
     })
 
