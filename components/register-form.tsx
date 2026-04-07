@@ -64,7 +64,7 @@ export function RegisterForm() {
 
       toast.success("Account created successfully 🎉")
 
-      router.push("/login")
+      window.location.href = "/login"
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>
 

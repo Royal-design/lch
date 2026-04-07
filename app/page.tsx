@@ -1,68 +1,39 @@
 "use client"
 
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+
 import { useAuthStore } from "@/store/useAuthStore"
+import Navbar from "@/components/landing/Navbar"
+import Hero from "@/components/landing/Hero"
+import Features from "@/components/landing/Features"
+import HowItWorks from "@/components/landing/HowItWorks"
+import Testimonials from "@/components/landing/Testimonials"
+import CTASection from "@/components/landing/CTASection"
+import Footer from "@/components/landing/Footer"
 
 export default function Home() {
-  const { user, loading } = useAuthStore()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!loading && user) {
-      router.push("/dashboard")
-    }
-  }, [user, loading, router])
+  const { loading } = useAuthStore()
 
   if (loading) {
     return (
-      <div className="flex min-h-svh items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="flex min-h-svh items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
       </div>
     )
   }
 
-  // If user is logged in, they'll be redirected to dashboard
-  // This shows only for unauthenticated users
+
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">Welcome to MyApp</CardTitle>
-          <CardDescription>
-            Your all-in-one application for managing projects and tasks
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3">
-            <Button asChild size="lg">
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/register">Create Account</Link>
-            </Button>
-          </div>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            <p>Features:</p>
-            <ul className="mt-2 space-y-1">
-              <li>✓ Project Management</li>
-              <li>✓ Task Tracking</li>
-              <li>✓ Team Collaboration</li>
-              <li>✓ Real-time Updates</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="flex min-h-screen flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900">
+      <Navbar />
+      <main className="grow">
+        <Hero />
+        <Features />
+        <HowItWorks />
+        <Testimonials />
+        <CTASection />
+      </main>
+      <Footer />
     </div>
   )
 }

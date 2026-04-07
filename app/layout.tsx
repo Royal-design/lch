@@ -1,9 +1,34 @@
 import { Geist_Mono, Inter } from "next/font/google"
+import type { Metadata } from "next"
 
 import AuthProvider from "@/components/AuthProvider"
 import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 import "./globals.css"
+
+export const metadata: Metadata = {
+  title: {
+    default: "Leenah Contribution Home",
+    template: "%s | Leenah Contribution Home",
+  },
+  description: "Save Together. Grow Together. Join contribution groups, save consistently, and build financial discipline with ease.",
+  keywords: ["savings", "contributions", "fintech", "community savings", "Leenah", "LCH"],
+  authors: [{ name: "Leenah Team" }],
+  creator: "Leenah Contribution Home",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://leenah.app",
+    title: "Leenah Contribution Home - Save Together. Grow Together.",
+    description: "The modern way to manage group contributions and savings.",
+    siteName: "Leenah Contribution Home",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Leenah Contribution Home",
+    description: "The modern way to manage group contributions and savings.",
+  },
+}
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 

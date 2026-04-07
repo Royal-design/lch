@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -20,7 +19,6 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { supabase } from "@/lib/supabase/client"
 import { loginSchema, type LoginSchema } from "@/schemas/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
 import axios, { AxiosError } from "axios"
@@ -29,7 +27,7 @@ import { toast } from "sonner"
 import SocialLogin from "./social-login"
 
 export function LoginForm() {
-  const router = useRouter()
+
   const [loading, setLoading] = useState(false)
 
   const form = useForm<LoginSchema>({
@@ -50,9 +48,7 @@ export function LoginForm() {
 
       await axios.post("/api/auth/login", data)
 
-      await supabase.auth.getSession()
-      router.refresh()
-      router.push("/dashboard")
+      window.location.href = "/dashboard"
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>
 
