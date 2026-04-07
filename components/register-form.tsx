@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
 import {
   Card,
   CardContent,
@@ -79,11 +78,6 @@ export function RegisterForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/" className="flex items-center gap-2 self-center group">
-        <span className="text-3xl font-bold tracking-tight text-emerald-600 transition-colors group-hover:text-emerald-700">
-          LCH
-        </span>
-      </Link>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create an account</CardTitle>
