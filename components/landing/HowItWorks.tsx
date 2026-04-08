@@ -32,11 +32,11 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-24 bg-slate-50/50">
+    <section id="how-it-works" className="py-24 bg-muted/50">
       <MaxWidthWrapper>
         <div className="flex flex-col items-center text-center space-y-4 mb-20">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Success in <span className="text-emerald-600">4 Simple Steps</span>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Success in <span className="text-emerald-600 dark:text-emerald-500">4 Simple Steps</span>
           </h2>
           <p className="max-w-2xl text-lg text-muted-foreground">
             Getting started with LCH is easy. Follow these steps to begin your journey towards collective financial growth.
@@ -45,18 +45,18 @@ export default function HowItWorks() {
 
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-4 md:grid-cols-2 relative lg:gap-8">
           {/* Connecting Line (Desktop) */}
-          <div className="absolute top-1/2 left-0 w-full h-[2px] bg-emerald-100/60 hidden lg:block -translate-y-1/2 scale-x-[0.85] pointer-events-none" />
+          <div className="absolute top-1/2 left-0 w-full h-[2px] bg-emerald-100/60 dark:bg-emerald-900/30 hidden lg:block -translate-y-1/2 scale-x-[0.85] pointer-events-none" />
 
           {steps.map((step, idx) => (
             <div key={idx} className="relative flex flex-col items-center text-center group">
-              <div className="mb-8 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-white border border-emerald-100 shadow-xl shadow-emerald-500/5 transition-transform group-hover:scale-110 z-10">
-                <div className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow-lg shadow-emerald-200">
+              <div className="mb-8 relative flex h-20 w-20 items-center justify-center rounded-3xl bg-card border border-border dark:border-emerald-900/50 shadow-xl shadow-emerald-500/5 transition-transform group-hover:scale-110 z-10">
+                <div className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/50">
                   {step.number}
                 </div>
                 {step.icon}
               </div>
               
-              <h3 className="mb-4 text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
+              <h3 className="mb-4 text-xl font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-500 transition-colors">
                 {step.title}
               </h3>
               <p className="text-muted-foreground leading-relaxed px-4">

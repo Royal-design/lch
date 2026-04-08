@@ -2,6 +2,7 @@ import { Geist_Mono, Inter } from "next/font/google"
 import type { Metadata } from "next"
 
 import AuthProvider from "@/components/AuthProvider"
+import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 import "./globals.css"
@@ -54,10 +55,17 @@ export default function RootLayout({
       )}
     >
       <body>
-        <AuthProvider>
-          <main>{children}</main>
-        </AuthProvider>
-        <Toaster position="top-right" />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <main>{children}</main>
+          </AuthProvider>
+          <Toaster position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   )

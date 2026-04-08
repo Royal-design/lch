@@ -4,7 +4,7 @@ import { MessageCircle, Send, Camera, Briefcase, Code } from "lucide-react"
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900 border-t border-slate-800 pt-20 pb-10 text-slate-400">
+    <footer className="bg-slate-900 dark:bg-slate-950 border-t border-slate-800 dark:border-slate-900 pt-20 pb-10 text-slate-400">
       <MaxWidthWrapper>
         <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           {/* Brand */}
@@ -71,7 +71,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-20 flex flex-col items-center justify-between gap-6 border-t border-slate-800 pt-8 sm:flex-row">
+        <div className="mt-20 flex flex-col items-center justify-between gap-6 border-t border-slate-800 dark:border-slate-900 pt-8 sm:flex-row">
           <p className="text-sm">
             © {new RegExp(/\d{4}/).exec(new Date().toISOString())} Leenah Contribution Home. All rights reserved.
           </p>

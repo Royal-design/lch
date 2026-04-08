@@ -25,14 +25,14 @@ const testimonials = [
 
 export default function Testimonials() {
   return (
-    <section id="testimonials" className="py-24 bg-white relative">
+    <section id="testimonials" className="py-24 bg-background relative">
        {/* Background Decoration */}
-       <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-emerald-50/40 blur-3xl" />
+       <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-emerald-50/40 dark:bg-emerald-900/10 blur-3xl" />
 
       <MaxWidthWrapper className="relative">
         <div className="flex flex-col items-center text-center space-y-4 mb-20">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Loved by <span className="text-emerald-600">Our Community</span>
+          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Loved by <span className="text-emerald-600 dark:text-emerald-500">Our Community</span>
           </h2>
           <p className="max-w-2xl text-lg text-muted-foreground">
             Don&apos;t just take our word for it. Here&apos;s what our savers have to say about their experience with Leenah Contribution Home.
@@ -43,14 +43,14 @@ export default function Testimonials() {
           {testimonials.map((t, idx) => (
             <div
               key={idx}
-              className="flex flex-col p-8 rounded-3xl border border-slate-100 bg-white shadow-lg shadow-slate-100/50 transition-all hover:border-emerald-100 hover:shadow-emerald-200/20"
+              className="flex flex-col p-8 rounded-3xl border border-border bg-card shadow-lg shadow-black/5 dark:shadow-none transition-all hover:border-emerald-100 dark:hover:border-emerald-900 hover:shadow-emerald-200/20"
             >
               <div className="flex gap-1 mb-6">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Star key={s} className="h-4 w-4 fill-emerald-500 text-emerald-500" />
                 ))}
               </div>
-              <p className="flex-1 text-lg italic text-slate-800 leading-relaxed mb-8">
+              <p className="flex-1 text-lg italic text-foreground/90 leading-relaxed mb-8">
                 &quot;{t.review}&quot;
               </p>
               <div className="flex items-center gap-4">
@@ -59,10 +59,10 @@ export default function Testimonials() {
                   alt={t.name}
                   width={56}
                   height={56}
-                  className="h-14 w-14 rounded-full border-2 border-white shadow-md ring-2 ring-emerald-50"
+                  className="h-14 w-14 rounded-full border-2 border-background shadow-md ring-2 ring-emerald-50 dark:ring-emerald-900/50"
                 />
                 <div>
-                  <h4 className="font-bold text-slate-900 leading-none">{t.name}</h4>
+                  <h4 className="font-bold text-foreground leading-none">{t.name}</h4>
                   <p className="text-sm text-muted-foreground mt-1">{t.role}</p>
                 </div>
               </div>

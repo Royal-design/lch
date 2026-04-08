@@ -16,7 +16,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex min-h-svh items-center justify-center bg-white">
+      <div className="flex min-h-svh items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
       </div>
     )
@@ -24,7 +24,7 @@ export default function Home() {
 
 
   return (
-    <div className="flex min-h-screen flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="flex min-h-screen flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900 selection:dark:bg-emerald-900 selection:dark:text-emerald-100">
       <Navbar />
       <main className="grow">
         <Hero />

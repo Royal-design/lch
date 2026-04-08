@@ -26,10 +26,10 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="py-24 bg-white">
+    <section id="features" className="py-24 bg-background">
       <MaxWidthWrapper>
         <div className="flex flex-col items-center text-center space-y-4 mb-16">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Everything you need for <span className="text-emerald-600">Smarter Savings</span>
           </h2>
           <p className="max-w-2xl text-lg text-muted-foreground">
@@ -41,12 +41,12 @@ export default function Features() {
           {features.map((feature, idx) => (
             <div
               key={idx}
-              className="group relative flex flex-col items-start p-8 rounded-3xl border border-slate-100 bg-white transition-all hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1"
+              className="group relative flex flex-col items-start p-8 rounded-3xl border border-border bg-card transition-all hover:border-emerald-200 dark:hover:border-emerald-800 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1"
             >
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 transition-colors group-hover:bg-emerald-100">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 transition-colors group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50">
                 {feature.icon}
               </div>
-              <h3 className="mb-3 text-xl font-bold text-slate-900">{feature.title}</h3>
+              <h3 className="mb-3 text-xl font-bold text-foreground">{feature.title}</h3>
               <p className="text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>

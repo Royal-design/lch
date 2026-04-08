@@ -5,9 +5,9 @@ import MaxWidthWrapper from "./MaxWidthWrapper"
 
 export default function CTASection() {
   return (
-    <section className="py-24 bg-white overflow-hidden relative">
+    <section className="py-24 bg-background overflow-hidden relative">
       <MaxWidthWrapper>
-        <div className="relative rounded-[2rem] bg-slate-900 px-6 py-20 text-center shadow-2xl shadow-emerald-900/40 sm:px-12 sm:py-32 overflow-hidden">
+        <div className="relative rounded-[2rem] bg-slate-900 dark:bg-slate-950 px-6 py-20 text-center shadow-2xl shadow-emerald-900/20 sm:px-12 sm:py-32 overflow-hidden border border-white/5">
           {/* Background Gradients */}
           <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-emerald-500/20 blur-[100px]" />
           <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-blue-500/20 blur-[100px]" />

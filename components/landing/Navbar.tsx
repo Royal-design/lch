@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import MaxWidthWrapper from "./MaxWidthWrapper"
 import { useAuthStore } from "@/store/useAuthStore"
+import { ModeToggle } from "../mode-toggle"
 
 export default function Navbar() {
   const { user } = useAuthStore()
@@ -24,7 +25,7 @@ export default function Navbar() {
     <nav
       className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${
         scrolled
-          ? "border-emerald-100 bg-white/70 backdrop-blur-md shadow-sm"
+          ? "border-emerald-100 dark:border-emerald-900/30 bg-background/80 backdrop-blur-md shadow-sm"
           : "border-transparent bg-transparent"
       }`}
     >
@@ -57,9 +58,11 @@ export default function Navbar() {
               ))}
             </div>
 
-            <div className="h-6 w-px bg-emerald-100" />
+            <div className="h-6 w-px bg-emerald-100 dark:bg-emerald-900/30" />
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              <ModeToggle />
+              <div className="flex items-center gap-3">
               {user ? (
                 <Button
                   asChild
@@ -89,20 +92,23 @@ export default function Navbar() {
               )}
             </div>
           </div>
+        </div>
 
-          {/* Mobile Toggle */}
-          <button
-            className="flex items-center justify-center rounded-md p-2 text-muted-foreground transition-all hover:bg-emerald-50 hover:text-emerald-600 md:hidden"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <ModeToggle />
+            <button
+              className="flex items-center justify-center rounded-md p-2 text-muted-foreground transition-all hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-600 dark:hover:text-emerald-400"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
       </MaxWidthWrapper>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="absolute top-16 left-0 w-full animate-in slide-in-from-top-2 border-b bg-white p-4 shadow-xl md:hidden">
+        <div className="absolute top-16 left-0 w-full animate-in slide-in-from-top-2 border-b bg-background p-4 shadow-xl md:hidden">
           <div className="flex flex-col gap-4">
             {[
               ["Home", "/"],
