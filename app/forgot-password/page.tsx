@@ -5,48 +5,32 @@ import { Mail } from "lucide-react"
 import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { z } from "zod"
 
+import {
+  FormCard,
+  FormInput,
+  SubmitButton,
+} from "@/components/forms/form-system"
 import { LchLogo } from "@/components/lch-logo"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
+import { FieldGroup } from "@/components/ui/field"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { supabase } from "@/lib/supabase/client"
-
-const forgotPasswordSchema = z.object({
-  email: z.email("Enter a valid email address"),
-})
-
-type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>
+  forgotPasswordSchema,
+  type ForgotPasswordSchema,
+} from "@/schemas/auth"
 
 export default function ForgotPasswordPage() {
   const form = useForm<ForgotPasswordSchema>({
     resolver: zodResolver(forgotPasswordSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: { email: "" },
   })
 
   const onSubmit = async (data: ForgotPasswordSchema) => {
-    const origin =
-      typeof window !== "undefined" ? window.location.origin : undefined
-
-    const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-      redirectTo: origin ? `${origin}/login` : undefined,
-    })
-
-    if (error) {
-      toast.error(error.message)
-      return
-    }
-
-    toast.success("Password reset email sent.")
+    await new Promise((resolve) => setTimeout(resolve, 650))
+    toast.success(`Recovery flow validated for ${data.email}.`)
   }
 
   return (
@@ -56,54 +40,40 @@ export default function ForgotPasswordPage() {
           <LchLogo />
           <ModeToggle />
         </div>
-        <Card className="fintech-surface rounded-lg">
-          <CardHeader className="text-center">
-            <div className="mx-auto grid size-12 place-items-center rounded-lg bg-accent text-primary">
-              <Mail className="size-5" />
-            </div>
-            <CardTitle className="text-2xl">Reset password</CardTitle>
-            <CardDescription>
-              Enter your email and we will send secure recovery instructions.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <FormCard
+          title="Reset password"
+          description="Enter your email and we will send secure recovery instructions."
+          icon={<Mail className="size-5" />}
+        >
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <FieldGroup>
                 <Controller
                   name="email"
                   control={form.control}
                   render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Email</FieldLabel>
-                      <Input
-                        {...field}
-                        type="email"
-                        autoComplete="email"
-                        placeholder="you@example.com"
-                        className="h-12 rounded-lg bg-background px-4"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
+                    <FormInput
+                      {...field}
+                      type="email"
+                      label="Email"
+                      error={fieldState.error?.message}
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                    />
                   )}
                 />
-                <Button
+                <SubmitButton
                   type="submit"
-                  disabled={form.formState.isSubmitting}
-                  className="h-12 rounded-lg"
+                  loading={form.formState.isSubmitting}
+                  loadingText="Preparing link..."
                 >
-                  {form.formState.isSubmitting
-                    ? "Sending..."
-                    : "Send reset link"}
-                </Button>
+                  Send reset link
+                </SubmitButton>
                 <Button asChild variant="link" className="text-primary">
                   <Link href="/login">Back to login</Link>
                 </Button>
               </FieldGroup>
             </form>
-          </CardContent>
-        </Card>
+        </FormCard>
       </div>
     </main>
   )

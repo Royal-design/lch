@@ -126,10 +126,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   if (!user) return null
 
   return (
-    <div className="min-h-svh bg-[radial-gradient(circle_at_top_left,oklch(0.96_0.018_202),transparent_34rem),linear-gradient(180deg,var(--background),var(--muted))] text-foreground dark:bg-[radial-gradient(circle_at_top_left,oklch(0.23_0.035_215),transparent_32rem),linear-gradient(180deg,var(--background),oklch(0.12_0.018_255))]">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-sidebar-border bg-sidebar px-3 py-4 text-sidebar-foreground lg:block">
+    <div className="min-h-svh bg-[radial-gradient(circle_at_top_left,oklch(0.94_0.04_155),transparent_34rem),linear-gradient(180deg,var(--background),var(--muted))] text-foreground dark:bg-[radial-gradient(circle_at_top_left,oklch(0.24_0.05_155),transparent_32rem),linear-gradient(180deg,var(--background),oklch(0.12_0.018_245))]">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-sidebar-border bg-sidebar px-4 py-5 text-sidebar-foreground lg:block">
         <LchLogo />
-        <nav className="mt-7 space-y-1.5">
+        <nav className="mt-8 space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon
             const active = isActive(pathname, item.href)
@@ -139,7 +139,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "group flex h-12 items-center gap-3 rounded-xl px-2 text-sm font-medium text-sidebar-foreground/68 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-sidebar-ring/40",
+                  "group flex h-12 cursor-pointer items-center gap-3 rounded-2xl px-2 text-sm font-semibold text-sidebar-foreground/68 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-sidebar-ring/40",
                   active &&
                     "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm shadow-black/10 hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                 )}
@@ -150,33 +150,33 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             )
           })}
         </nav>
-        <div className="absolute bottom-4 left-3 right-3 rounded-xl border border-sidebar-border bg-sidebar-accent p-4">
-          <p className="text-xs font-semibold">Protected workspace</p>
+        <div className="absolute bottom-5 left-4 right-4 rounded-2xl border border-sidebar-border bg-sidebar-accent/90 p-4 shadow-2xl shadow-black/10">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sidebar-primary">Protected workspace</p>
           <p className="mt-1 text-xs leading-5 text-sidebar-foreground/62">
             Wallet, savings, and contribution operations in one dashboard.
           </p>
         </div>
       </aside>
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 border-b border-border/70 bg-background/84 backdrop-blur-2xl">
-          <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="lg:pl-72">
+        <header className="sticky top-0 z-20 border-b border-border/60 bg-background/78 backdrop-blur-2xl">
+          <div className="flex h-[4.25rem] items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="lg:hidden">
               <LchLogo compact />
             </div>
             <div className="hidden lg:block">
-              <p className="text-sm text-muted-foreground">Welcome back</p>
-              <h1 className="text-lg font-semibold tracking-tight">
-                Operations dashboard
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Welcome back</p>
+              <h1 className="text-lg font-bold tracking-tight">
+                Financial command center
               </h1>
             </div>
             <div className="flex items-center gap-2">
               <ModeToggle />
-              <Button variant="outline" size="icon" className="rounded-lg">
+              <Button variant="outline" size="icon" className="rounded-xl">
                 <Bell className="size-4" />
                 <span className="sr-only">Notifications</span>
               </Button>
-              <Avatar className="size-9 border border-border">
+              <Avatar className="size-10 border border-border shadow-sm shadow-slate-950/5">
                 <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
                   {initials}
                 </AvatarFallback>
@@ -184,7 +184,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden rounded-lg sm:inline-flex"
+                className="hidden rounded-xl sm:inline-flex"
                 onClick={signOut}
               >
                 <LogOut className="size-4" />
@@ -194,13 +194,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="px-4 pb-36 pt-5 sm:px-6 lg:px-8 lg:pb-10">
+        <main className="px-4 pb-36 pt-5 sm:px-6 lg:px-8 lg:pb-10 lg:pt-7">
           {children}
         </main>
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-36 bg-background/55 backdrop-blur-2xl [mask-image:linear-gradient(to_top,black_35%,transparent)] dark:bg-background/45 lg:hidden" />
-      <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 rounded-[1.45rem] border border-white/70 bg-white/82 p-1.5 shadow-[0_22px_55px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-card/82 dark:shadow-[0_24px_60px_rgba(0,0,0,0.38)] lg:hidden">
+      <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 rounded-[1.45rem] border border-white/75 bg-white/86 p-1.5 shadow-[0_22px_55px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-card/82 dark:shadow-[0_24px_60px_rgba(0,0,0,0.38)] lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
           {mobileItems.map((item) => {
             const Icon = item.icon

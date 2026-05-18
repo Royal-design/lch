@@ -16,10 +16,10 @@ export function SignupScreen() {
       <section className="hidden border-r border-sidebar-border bg-sidebar p-10 text-sidebar-foreground lg:flex lg:flex-col">
         <LchLogo className="[&_span:first-child]:bg-sidebar-primary [&_span:first-child]:text-sidebar-primary-foreground [&_span:last-child_span]:text-sidebar-foreground/62" />
         <div className="my-auto max-w-lg space-y-6">
-          <p className="text-sm font-semibold text-sidebar-foreground/65">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sidebar-primary">
             Build financial discipline
           </p>
-          <h1 className="text-5xl font-bold tracking-tight">
+          <h1 className="text-5xl font-bold tracking-tight text-balance">
             Create contribution plans with a premium dashboard foundation.
           </h1>
           <p className="text-lg leading-8 text-sidebar-foreground/68">
@@ -28,8 +28,10 @@ export function SignupScreen() {
           </p>
           <div className="grid gap-3">
             {trustItems.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-3 rounded-lg border border-sidebar-border bg-sidebar-accent p-4">
-                <Icon className="size-5" />
+              <div key={label} className="flex items-center gap-3 rounded-2xl border border-sidebar-border bg-sidebar-accent/90 p-4 shadow-xl shadow-black/5">
+                <span className="grid size-10 place-items-center rounded-xl bg-sidebar-primary/15 text-sidebar-primary">
+                  <Icon className="size-5" />
+                </span>
                 <span className="font-medium">{label}</span>
               </div>
             ))}

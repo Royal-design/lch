@@ -17,7 +17,7 @@ export default function SocialLogin() {
       <Button
         variant="outline"
         type="button"
-        className="w-full py-5"
+        className="h-12 w-full rounded-xl"
         onClick={handleGoogleLogin}
       >
         <FcGoogle />

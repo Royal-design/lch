@@ -1,82 +1,60 @@
 "use client"
 
-import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
-  FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { loginSchema, type LoginSchema } from "@/schemas/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
-import axios, { AxiosError } from "axios"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
+import {
+  FormCard,
+  FormFieldShell,
+  FormInput,
+  SubmitButton,
+} from "./forms/form-system"
 import SocialLogin from "./social-login"
 
 export function LoginForm() {
-
-  const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: true,
     },
   })
 
-  type ErrorResponse = {
-    error?: string
-  }
-
   const onSubmit = async (data: LoginSchema) => {
-    try {
-      setLoading(true)
-
-      await axios.post("/api/auth/login", data)
-
-      window.location.href = "/dashboard"
-    } catch (err) {
-      const error = err as AxiosError<ErrorResponse>
-
-      const message = error.response?.data?.error || "Something went wrong"
-
-      toast.error(message)
-    } finally {
-      setLoading(false)
-    }
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    toast.success(
+      data.rememberMe
+        ? "Login form validated. Remember me is on."
+        : "Login form validated."
+    )
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <Card className="fintech-surface rounded-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>
-            Login to manage your wallet, contributions, and savings plans.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
+      <FormCard
+        title="Welcome back"
+        description="Login to manage your wallet, contributions, and savings plans."
+      >
           <SocialLogin />
 
-          <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
+          <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card *:data-[slot=field-separator-content]:text-muted-foreground">
             Or continue with
           </FieldSeparator>
 
@@ -92,22 +70,14 @@ export function LoginForm() {
                 name="email"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Email</FieldLabel>
-
-                    <Input
-                      {...field}
-                      type="email"
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Enter your email"
-                      autoComplete="email"
-                      className="h-12 rounded-lg bg-background px-4"
-                    />
-
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
+                  <FormInput
+                    {...field}
+                    type="email"
+                    label="Email"
+                    error={fieldState.error?.message}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                  />
                 )}
               />
 
@@ -116,9 +86,10 @@ export function LoginForm() {
                 name="password"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Password</FieldLabel>
-
+                  <FormFieldShell
+                    label="Password"
+                    error={fieldState.error?.message}
+                  >
                     <div className="relative">
                       <Input
                         {...field}
@@ -126,13 +97,13 @@ export function LoginForm() {
                         aria-invalid={fieldState.invalid}
                         placeholder="Enter your password"
                         autoComplete="current-password"
-                        className="h-12 rounded-lg bg-background px-4 pr-12"
+                        className="h-12 rounded-xl px-4 pr-12"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl"
                         onClick={() => setShowPassword((value) => !value)}
                       >
                         {showPassword ? (
@@ -143,38 +114,53 @@ export function LoginForm() {
                         <span className="sr-only">Toggle password visibility</span>
                       </Button>
                     </div>
-
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
+                  </FormFieldShell>
                 )}
               />
 
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between gap-3">
+                <Controller
+                  name="rememberMe"
+                  control={form.control}
+                  render={({ field }) => (
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(field.value)}
+                        onChange={field.onChange}
+                        className="size-4 rounded border-border accent-primary"
+                      />
+                      Remember me
+                    </label>
+                  )}
+                />
                 <Link
                   href="/forgot-password"
-                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  className="text-sm font-semibold text-primary underline-offset-4 hover:underline"
                 >
                   Forgot password?
                 </Link>
               </div>
 
               {/* BUTTON */}
-              <Button type="submit" disabled={loading} className="h-12 rounded-lg">
-                {loading ? "Logging in..." : "Login"}
-              </Button>
+              <SubmitButton
+                type="submit"
+                loading={form.formState.isSubmitting}
+                loadingText="Checking details..."
+                disabled={!form.formState.isValid && form.formState.isSubmitted}
+              >
+                Login
+              </SubmitButton>
 
               <FieldDescription className="text-center">
                 Don&apos;t have an account?{" "}
-                <Link href="/signup" className="font-medium text-primary underline">
+                <Link href="/signup" className="font-semibold text-primary underline">
                   Sign up
                 </Link>
               </FieldDescription>
             </FieldGroup>
           </form>
-        </CardContent>
-      </Card>
+      </FormCard>
     </div>
   )
 }

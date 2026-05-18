@@ -12,16 +12,16 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-5">
       <div>
-        <p className="text-sm font-medium text-muted-foreground">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
           Notifications
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="mt-1 text-2xl font-bold tracking-tight">
           Money updates
         </h1>
       </div>
 
-      <Card className="fintech-surface rounded-lg">
-        <CardHeader className="pb-1">
+      <Card className="fintech-surface rounded-[1.35rem]">
+        <CardHeader>
           <CardTitle>Inbox</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -32,9 +32,9 @@ export default function NotificationsPage() {
             return (
               <div
                 key={title}
-                className="flex gap-3 rounded-lg border border-border bg-background p-4"
+                className="flex gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/20 hover:bg-card"
               >
-                <div className="grid size-9 shrink-0 place-items-center rounded-md bg-accent text-primary">
+                <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-primary">
                   <Icon className="size-4" />
                 </div>
                 <div className="min-w-0">

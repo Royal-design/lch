@@ -48,70 +48,70 @@
 }
 
 :root {
-    --background: oklch(0.985 0.006 250);
-    --foreground: oklch(0.18 0.025 255);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.18 0.025 255);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.18 0.025 255);
-    --primary: oklch(0.34 0.075 255);
-    --primary-foreground: oklch(0.985 0.005 250);
-    --secondary: oklch(0.955 0.012 250);
-    --secondary-foreground: oklch(0.24 0.035 255);
-    --muted: oklch(0.95 0.01 250);
-    --muted-foreground: oklch(0.46 0.028 255);
-    --accent: oklch(0.93 0.025 210);
-    --accent-foreground: oklch(0.29 0.07 220);
+    --background: oklch(0.982 0.006 165);
+    --foreground: oklch(0.18 0.022 250);
+    --card: oklch(0.998 0.002 165);
+    --card-foreground: oklch(0.18 0.022 250);
+    --popover: oklch(0.998 0.002 165);
+    --popover-foreground: oklch(0.18 0.022 250);
+    --primary: oklch(0.46 0.13 156);
+    --primary-foreground: oklch(0.985 0.006 160);
+    --secondary: oklch(0.952 0.01 170);
+    --secondary-foreground: oklch(0.25 0.035 245);
+    --muted: oklch(0.947 0.009 175);
+    --muted-foreground: oklch(0.45 0.03 245);
+    --accent: oklch(0.93 0.035 155);
+    --accent-foreground: oklch(0.29 0.09 155);
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.88 0.012 250);
-    --input: oklch(0.9 0.012 250);
-    --ring: oklch(0.58 0.12 225);
-    --chart-1: oklch(0.54 0.15 225);
+    --border: oklch(0.875 0.012 175);
+    --input: oklch(0.89 0.012 175);
+    --ring: oklch(0.58 0.14 156);
+    --chart-1: oklch(0.55 0.15 156);
     --chart-2: oklch(0.58 0.12 175);
     --chart-3: oklch(0.7 0.14 85);
     --chart-4: oklch(0.58 0.13 285);
     --chart-5: oklch(0.64 0.16 35);
-    --radius: 0.5rem;
-    --sidebar: oklch(0.18 0.026 255);
-    --sidebar-foreground: oklch(0.92 0.01 250);
-    --sidebar-primary: oklch(0.72 0.12 190);
-    --sidebar-primary-foreground: oklch(0.16 0.025 255);
-    --sidebar-accent: oklch(0.24 0.03 255);
-    --sidebar-accent-foreground: oklch(0.96 0.006 250);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.17 0.024 245);
+    --sidebar-foreground: oklch(0.93 0.01 180);
+    --sidebar-primary: oklch(0.68 0.14 156);
+    --sidebar-primary-foreground: oklch(0.13 0.02 245);
+    --sidebar-accent: oklch(0.23 0.026 245);
+    --sidebar-accent-foreground: oklch(0.96 0.006 180);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.72 0.12 190);
 }
 
 .dark {
-    --background: oklch(0.15 0.018 255);
-    --foreground: oklch(0.94 0.008 250);
-    --card: oklch(0.2 0.02 255);
-    --card-foreground: oklch(0.94 0.008 250);
-    --popover: oklch(0.19 0.02 255);
-    --popover-foreground: oklch(0.94 0.008 250);
-    --primary: oklch(0.72 0.12 190);
-    --primary-foreground: oklch(0.14 0.024 255);
-    --secondary: oklch(0.25 0.023 255);
-    --secondary-foreground: oklch(0.92 0.008 250);
-    --muted: oklch(0.25 0.022 255);
-    --muted-foreground: oklch(0.72 0.014 250);
-    --accent: oklch(0.28 0.035 220);
-    --accent-foreground: oklch(0.9 0.04 205);
+    --background: oklch(0.145 0.019 245);
+    --foreground: oklch(0.94 0.008 180);
+    --card: oklch(0.205 0.02 245);
+    --card-foreground: oklch(0.94 0.008 180);
+    --popover: oklch(0.19 0.02 245);
+    --popover-foreground: oklch(0.94 0.008 180);
+    --primary: oklch(0.7 0.14 156);
+    --primary-foreground: oklch(0.13 0.024 245);
+    --secondary: oklch(0.25 0.023 245);
+    --secondary-foreground: oklch(0.92 0.008 180);
+    --muted: oklch(0.255 0.022 245);
+    --muted-foreground: oklch(0.72 0.014 185);
+    --accent: oklch(0.28 0.055 155);
+    --accent-foreground: oklch(0.9 0.045 155);
     --destructive: oklch(0.704 0.191 22.216);
     --border: oklch(1 0 0 / 12%);
     --input: oklch(1 0 0 / 16%);
-    --ring: oklch(0.72 0.12 190);
-    --chart-1: oklch(0.72 0.12 190);
+    --ring: oklch(0.7 0.14 156);
+    --chart-1: oklch(0.7 0.14 156);
     --chart-2: oklch(0.68 0.13 225);
     --chart-3: oklch(0.78 0.13 85);
     --chart-4: oklch(0.68 0.12 250);
     --chart-5: oklch(0.72 0.15 35);
-    --sidebar: oklch(0.16 0.02 255);
-    --sidebar-foreground: oklch(0.92 0.008 250);
-    --sidebar-primary: oklch(0.72 0.12 190);
-    --sidebar-primary-foreground: oklch(0.14 0.024 255);
-    --sidebar-accent: oklch(0.24 0.026 255);
-    --sidebar-accent-foreground: oklch(0.94 0.008 250);
+    --sidebar: oklch(0.155 0.02 245);
+    --sidebar-foreground: oklch(0.92 0.008 180);
+    --sidebar-primary: oklch(0.7 0.14 156);
+    --sidebar-primary-foreground: oklch(0.13 0.024 245);
+    --sidebar-accent: oklch(0.24 0.026 245);
+    --sidebar-accent-foreground: oklch(0.94 0.008 180);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.67 0.15 155);
 }
@@ -122,6 +122,7 @@
     }
   body {
     @apply bg-background text-foreground transition-colors duration-300;
+    text-rendering: geometricPrecision;
     }
   html {
     @apply font-sans;
@@ -130,18 +131,26 @@
 
 @layer utilities {
   .fintech-surface {
-    @apply border border-border/80 bg-card shadow-sm shadow-slate-950/5 dark:bg-card/95 dark:shadow-black/20;
+    @apply border border-border/80 bg-card/95 shadow-[0_18px_55px_rgba(15,23,42,0.06)] shadow-slate-950/5 backdrop-blur-xl dark:bg-card/90 dark:shadow-black/25;
   }
 
   .fintech-page {
-    @apply min-h-svh bg-[linear-gradient(180deg,var(--background),var(--muted))] dark:bg-[linear-gradient(180deg,var(--background),oklch(0.12_0.018_255))];
+    @apply min-h-svh bg-[radial-gradient(circle_at_top_left,oklch(0.93_0.035_155),transparent_30rem),linear-gradient(180deg,var(--background),var(--muted))] dark:bg-[radial-gradient(circle_at_top_left,oklch(0.24_0.05_155),transparent_28rem),linear-gradient(180deg,var(--background),oklch(0.12_0.018_245))];
   }
 
   .metric-panel {
-    @apply rounded-lg border border-border bg-card p-4 shadow-sm shadow-slate-950/5 dark:bg-card/95;
+    @apply rounded-2xl border border-border/80 bg-card/90 p-4 shadow-[0_14px_34px_rgba(15,23,42,0.05)] dark:bg-card/80;
   }
 
   .status-pill {
-    @apply inline-flex h-6 items-center rounded-md border border-border bg-muted px-2 text-xs font-medium text-muted-foreground;
+    @apply inline-flex h-6 items-center rounded-full border border-border/80 bg-muted/85 px-2.5 text-[0.68rem] font-semibold text-muted-foreground;
+  }
+
+  .premium-ring {
+    @apply ring-1 ring-black/[0.04] dark:ring-white/[0.08];
+  }
+
+  .fintech-card-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_22px_60px_rgba(15,23,42,0.09)] dark:hover:shadow-black/35;
   }
 }

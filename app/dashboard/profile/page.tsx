@@ -69,9 +69,9 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[0.8fr_1fr]">
-      <Card className="fintech-surface rounded-lg">
+      <Card className="fintech-surface rounded-[1.35rem]">
         <CardContent className="flex flex-col items-center p-6 text-center">
-          <Avatar className="size-20 border border-border">
+          <Avatar className="size-20 border border-border shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName} /> : null}
             <AvatarFallback className="bg-primary/10 text-xl font-bold text-primary">
               {initials}
@@ -81,15 +81,15 @@ export default function ProfilePage() {
           <p className="mt-1 text-sm text-muted-foreground">{email}</p>
         </CardContent>
       </Card>
-      <Card className="fintech-surface rounded-lg">
-        <CardHeader className="pb-1">
+      <Card className="fintech-surface rounded-[1.35rem]">
+        <CardHeader>
           <CardTitle>Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {profileFields.map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-4">
+            <div key={label} className="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/70 p-4">
               <div className="flex items-center gap-3">
-                <div className="grid size-9 place-items-center rounded-md bg-accent text-primary">
+                <div className="grid size-11 place-items-center rounded-2xl bg-accent text-primary">
                   <Icon className="size-4" />
                 </div>
                 <span className="text-sm text-muted-foreground">{label}</span>
@@ -99,7 +99,7 @@ export default function ProfilePage() {
               </span>
             </div>
           ))}
-          <div className="flex items-center justify-between rounded-lg border border-border bg-background p-4">
+          <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-background/70 p-4">
             <div>
               <p className="text-sm font-semibold">Appearance</p>
               <p className="mt-1 text-xs text-muted-foreground">

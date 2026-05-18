@@ -5,30 +5,22 @@ import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
-  FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { registerSchema, type RegisterSchema } from "@/schemas/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
-import axios, { AxiosError } from "axios"
 import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
-
-type ErrorResponse = {
-  error?: string
-}
+import {
+  FormCard,
+  FormFieldShell,
+  FormInput,
+  PasswordStrength,
+  SubmitButton,
+} from "./forms/form-system"
 
 export function RegisterForm() {
   const [loading, setLoading] = useState(false)
@@ -37,6 +29,8 @@ export function RegisterForm() {
 
   const form = useForm<RegisterSchema>({
     resolver: zodResolver(registerSchema),
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       fullName: "",
       email: "",
@@ -47,54 +41,30 @@ export function RegisterForm() {
   })
 
   const onSubmit = async (data: RegisterSchema) => {
-    try {
-      setLoading(true)
-
-      await axios.post("/api/auth/register", {
-        fullName: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        password: data.password,
-      })
-
-      toast.success("Account created. Please check your email to confirm.")
-      window.location.href = "/login"
-    } catch (err) {
-      const error = err as AxiosError<ErrorResponse>
-      toast.error(error.response?.data?.error || "Something went wrong")
-    } finally {
-      setLoading(false)
-    }
+    setLoading(true)
+    await new Promise((resolve) => setTimeout(resolve, 800))
+    setLoading(false)
+    toast.success(`${data.fullName.split(" ")[0] || "Account"} is ready for Week 2 integration.`)
   }
 
   return (
-    <Card className="fintech-surface rounded-lg">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Create your LCH account</CardTitle>
-        <CardDescription>
-          Start with secure access to contribution plans and wallet tracking.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent>
+    <FormCard
+      title="Create your LCH account"
+      description="Start with secure access to contribution plans and wallet tracking."
+    >
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
               name="fullName"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Full name</FieldLabel>
-                  <Input
-                    {...field}
-                    autoComplete="name"
-                    placeholder="Amina Yusuf"
-                    className="h-12 rounded-lg bg-background px-4"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
+                <FormInput
+                  {...field}
+                  label="Full name"
+                  error={fieldState.error?.message}
+                  autoComplete="name"
+                  placeholder="Amina Yusuf"
+                />
               )}
             />
 
@@ -103,19 +73,14 @@ export function RegisterForm() {
                 name="email"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Email</FieldLabel>
-                    <Input
-                      {...field}
-                      type="email"
-                      autoComplete="email"
-                      placeholder="you@example.com"
-                      className="h-12 rounded-lg bg-background px-4"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
+                  <FormInput
+                    {...field}
+                    type="email"
+                    label="Email"
+                    error={fieldState.error?.message}
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                  />
                 )}
               />
 
@@ -123,42 +88,39 @@ export function RegisterForm() {
                 name="phone"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Phone number</FieldLabel>
-                    <Input
-                      {...field}
-                      type="tel"
-                      autoComplete="tel"
-                      placeholder="+234 801 234 5678"
-                      className="h-12 rounded-lg bg-background px-4"
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
+                  <FormInput
+                    {...field}
+                    type="tel"
+                    label="Phone number"
+                    error={fieldState.error?.message}
+                    autoComplete="tel"
+                    placeholder="+234 801 234 5678"
+                  />
                 )}
               />
             </div>
 
             <Controller
-              name="password"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Password</FieldLabel>
+                name="password"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                <FormFieldShell
+                  label="Password"
+                  error={fieldState.error?.message}
+                >
                   <div className="relative">
                     <Input
                       {...field}
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
                       placeholder="Create a strong password"
-                      className="h-12 rounded-lg bg-background px-4 pr-12"
+                      className="h-12 rounded-xl px-4 pr-12"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl"
                       onClick={() => setShowPassword((value) => !value)}
                     >
                       {showPassword ? (
@@ -169,32 +131,32 @@ export function RegisterForm() {
                       <span className="sr-only">Toggle password visibility</span>
                     </Button>
                   </div>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
+                  <PasswordStrength password={field.value} />
+                </FormFieldShell>
               )}
             />
 
             <Controller
-              name="confirmPassword"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Confirm password</FieldLabel>
+                name="confirmPassword"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                <FormFieldShell
+                  label="Confirm password"
+                  error={fieldState.error?.message}
+                >
                   <div className="relative">
                     <Input
                       {...field}
                       type={showConfirmPassword ? "text" : "password"}
                       autoComplete="new-password"
                       placeholder="Repeat your password"
-                      className="h-12 rounded-lg bg-background px-4 pr-12"
+                      className="h-12 rounded-xl px-4 pr-12"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl"
                       onClick={() =>
                         setShowConfirmPassword((value) => !value)
                       }
@@ -209,30 +171,27 @@ export function RegisterForm() {
                       </span>
                     </Button>
                   </div>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
+                </FormFieldShell>
               )}
             />
 
-            <Button
+            <SubmitButton
               type="submit"
               disabled={loading}
-              className="h-12 rounded-lg"
+              loading={loading}
+              loadingText="Creating account..."
             >
-              {loading ? "Creating account..." : "Create account"}
-            </Button>
+              Create account
+            </SubmitButton>
 
             <FieldDescription className="text-center">
               Already have an account?{" "}
-              <Link href="/login" className="font-medium text-primary underline">
+              <Link href="/login" className="font-semibold text-primary underline">
                 Login
               </Link>
             </FieldDescription>
           </FieldGroup>
         </form>
-      </CardContent>
-    </Card>
+    </FormCard>
   )
 }

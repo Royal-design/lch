@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, Laptop, Moon, Sun } from "lucide-react"
+import { Laptop, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
@@ -10,9 +10,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
 
 const themes = [
   { value: "light", label: "Light", icon: Sun },
@@ -43,9 +41,9 @@ export function ModeToggle() {
   }
 
   const activeTheme = theme ?? "system"
-  const ActiveIcon =
-    themes.find((item) => item.value === activeTheme)?.icon ??
-    (resolvedTheme === "dark" ? Moon : Sun)
+  const activeThemeItem = themes.find((item) => item.value === activeTheme)
+  const ActiveIcon = activeThemeItem?.icon ?? (resolvedTheme === "dark" ? Moon : Sun)
+  const activeLabel = activeThemeItem?.label ?? "System"
 
   return (
     <Select value={activeTheme} onValueChange={setTheme}>
@@ -54,7 +52,7 @@ export function ModeToggle() {
         className="h-9 w-auto gap-2 rounded-full border-border/80 bg-card/85 px-3 shadow-sm transition-colors hover:bg-accent dark:bg-card/75"
       >
         <ActiveIcon className="size-4 text-primary" />
-        <SelectValue />
+        <span>{activeLabel}</span>
       </SelectTrigger>
       <SelectContent align="end" position="popper" className="min-w-36">
         {themes.map((item) => {
@@ -64,12 +62,6 @@ export function ModeToggle() {
             <SelectItem key={item.value} value={item.value}>
               <Icon className="size-4 text-muted-foreground" />
               <span>{item.label}</span>
-              <Check
-                className={cn(
-                  "ml-auto size-3.5 text-primary opacity-0",
-                  activeTheme === item.value && "opacity-100"
-                )}
-              />
             </SelectItem>
           )
         })}

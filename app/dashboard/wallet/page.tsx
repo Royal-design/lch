@@ -1,78 +1,187 @@
+"use client"
+
 import {
   ArrowDownLeft,
   ArrowUpRight,
   Banknote,
   CreditCard,
+  Filter,
   Landmark,
+  Search,
+  ShieldCheck,
   Wallet,
 } from "lucide-react"
+import { useState } from "react"
 
+import { DepositForm } from "@/components/forms/deposit-form"
+import { FormModal } from "@/components/forms/form-system"
+import { WithdrawalRequestForm } from "@/components/forms/withdrawal-request-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const walletStats = [
-  { icon: Landmark, label: "Locked savings", value: "NGN 320,000" },
-  { icon: CreditCard, label: "Pending withdrawals", value: "NGN 18,500" },
-  { icon: Banknote, label: "This month inflow", value: "NGN 250,000" },
+  { icon: Landmark, label: "Locked savings", value: "NGN 320,000", caption: "Maturing across 2 plans" },
+  { icon: CreditCard, label: "Pending withdrawals", value: "NGN 18,500", caption: "Processing review" },
+  { icon: Banknote, label: "This month inflow", value: "NGN 250,000", caption: "5 successful credits" },
+]
+
+const ledger = [
+  ["Wallet top up", "Today, 9:24 AM", "+NGN 50,000", "Successful"],
+  ["Withdrawal request", "Yesterday, 6:12 PM", "-NGN 18,500", "Processing"],
+  ["Locked savings", "May 16, 2026", "NGN 120,000", "Locked"],
 ]
 
 export default function WalletPage() {
+  const [query, setQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const filteredLedger = ledger.filter(([title, time, amount, status]) => {
+    const matchesQuery = `${title} ${time} ${amount} ${status}`
+      .toLowerCase()
+      .includes(query.toLowerCase())
+    const matchesStatus = statusFilter === "all" || status.toLowerCase() === statusFilter
+
+    return matchesQuery && matchesStatus
+  })
+
   return (
-    <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1fr_0.75fr]">
-      <Card className="fintech-surface rounded-lg">
-        <CardContent className="p-5 sm:p-6">
+    <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1.08fr_0.82fr]">
+      <section className="space-y-5">
+        <div className="relative overflow-hidden rounded-[1.7rem] bg-[radial-gradient(circle_at_86%_10%,rgba(255,255,255,0.25),transparent_8rem),linear-gradient(135deg,oklch(0.35_0.1_158),oklch(0.2_0.04_245))] p-5 text-white shadow-[0_24px_70px_rgba(7,95,63,0.2)] sm:p-7 dark:shadow-black/35">
+          <div className="absolute inset-x-7 top-0 h-px bg-white/35" />
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-md border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                <Wallet className="size-3.5 text-primary" />
-                Available balance
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/76 backdrop-blur">
+                <Wallet className="size-3.5" />
+                Primary wallet
               </div>
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+              <h1 className="mt-5 text-[2.5rem] font-bold leading-none tracking-tight sm:text-5xl">
                 NGN 522,500
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Funds available for withdrawal or new contribution plans.
+              <p className="mt-3 max-w-lg text-sm leading-6 text-white/68">
+                Funds available for withdrawals, transfers, and new contribution plans.
               </p>
             </div>
-            <div className="hidden size-12 place-items-center rounded-lg bg-accent text-primary sm:grid">
-              <Wallet className="size-6" />
+            <div className="hidden size-14 place-items-center rounded-2xl border border-white/15 bg-white/10 sm:grid">
+              <ShieldCheck className="size-6" />
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <Button className="h-10 rounded-lg">
-              <ArrowDownLeft className="size-4" />
-              Deposit
-            </Button>
-            <Button variant="outline" className="h-10 rounded-lg">
-              <ArrowUpRight className="size-4" />
-              Withdraw
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="fintech-surface rounded-lg">
-        <CardHeader className="pb-1">
-          <CardTitle>Wallet details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {walletStats.map(({ icon: Icon, label, value }) => (
-            <div
-              key={label}
-              className="flex items-center justify-between rounded-lg border border-border bg-background p-4"
+          <div className="mt-7 grid grid-cols-2 gap-3">
+            <FormModal
+              title="Deposit funds"
+              description="Validate a top-up before connecting payment rails."
+              trigger={
+                <Button className="h-12 rounded-full bg-white text-slate-950 shadow-none hover:bg-white/90">
+                  <ArrowDownLeft className="size-4" />
+                  Deposit
+                </Button>
+              }
             >
-              <div className="flex items-center gap-3">
-                <div className="grid size-9 place-items-center rounded-md bg-accent text-primary">
-                  <Icon className="size-4" />
-                </div>
-                <span className="text-sm text-muted-foreground">{label}</span>
+              <DepositForm framed={false} />
+            </FormModal>
+            <FormModal
+              title="Request withdrawal"
+              description="Check amount and reason before submitting a withdrawal request."
+              trigger={
+                <Button className="h-12 rounded-full border border-white/20 bg-white/10 text-white shadow-none hover:bg-white/15">
+                  <ArrowUpRight className="size-4" />
+                  Withdraw
+                </Button>
+              }
+            >
+              <WithdrawalRequestForm framed={false} />
+            </FormModal>
+          </div>
+        </div>
+
+        <Card className="fintech-surface rounded-[1.35rem]">
+          <CardHeader className="gap-3">
+            <CardTitle>Wallet activity</CardTitle>
+            <div className="grid gap-2 sm:grid-cols-[1fr_10rem]">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search wallet activity"
+                  className="h-10 rounded-xl pl-9"
+                />
               </div>
-              <span className="font-semibold">{value}</span>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-10 w-full rounded-xl bg-card/75 px-3">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="all">All status</SelectItem>
+                  <SelectItem value="successful">Successful</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="locked">Locked</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {filteredLedger.map(([title, time, amount, status]) => (
+              <div key={`${title}-${time}`} className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/20 hover:bg-card">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-primary">
+                    {amount.startsWith("-") ? <ArrowUpRight className="size-4" /> : <ArrowDownLeft className="size-4" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold">{title}</p>
+                    <p className="text-xs text-muted-foreground">{time}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold">{amount}</p>
+                  <span className="status-pill mt-1">{status}</span>
+                </div>
+              </div>
+            ))}
+            {filteredLedger.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-8 text-center">
+                <Filter className="mx-auto size-5 text-muted-foreground" />
+                <p className="mt-2 text-sm font-semibold">No wallet activity found</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Try another search or status filter.
+                </p>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-5">
+        <Card className="fintech-surface rounded-[1.35rem]">
+          <CardHeader>
+            <CardTitle>Wallet details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {walletStats.map(({ icon: Icon, label, value, caption }) => (
+              <div key={label} className="rounded-2xl border border-border/70 bg-background/70 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-11 place-items-center rounded-2xl bg-accent text-primary">
+                    <Icon className="size-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">{label}</p>
+                    <p className="text-xs text-muted-foreground">{caption}</p>
+                  </div>
+                </div>
+                <p className="mt-4 text-xl font-bold tracking-tight">{value}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </section>
     </div>
   )
 }
