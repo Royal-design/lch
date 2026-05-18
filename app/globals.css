@@ -153,4 +153,28 @@
   .fintech-card-hover {
     @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_22px_60px_rgba(15,23,42,0.09)] dark:hover:shadow-black/35;
   }
+
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--sidebar-border) transparent;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--sidebar-border);
+    border-radius: 9999px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--sidebar-accent-foreground);
+    opacity: 0.8;
+  }
 }

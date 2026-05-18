@@ -29,7 +29,7 @@ export default function AdminOverviewPage() {
         description="Monitor money flow, growth, pending actions, and operational exceptions across LCH."
       />
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {data.kpis.map((kpi) => (
           <KpiCard key={kpi.label} {...kpi} />
         ))}

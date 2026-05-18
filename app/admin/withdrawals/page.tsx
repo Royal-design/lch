@@ -30,7 +30,7 @@ export default function AdminWithdrawalsPage() {
           <CardTitle>Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto thin-scrollbar">
             <table className="w-full min-w-[900px] text-left text-sm">
               <thead>
                 <tr className="border-b border-border text-xs uppercase tracking-[0.12em] text-muted-foreground">

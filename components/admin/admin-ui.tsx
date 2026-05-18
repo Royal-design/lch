@@ -70,18 +70,18 @@ export function KpiCard({
   trend: string
 }) {
   return (
-    <Card className="fintech-surface rounded-[1.35rem]">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="grid size-11 place-items-center rounded-2xl bg-accent text-primary">
-            <Icon className="size-5" />
+    <Card className="fintech-surface rounded-[1.1rem]">
+      <CardContent className="p-3.5 sm:p-5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="grid size-8 sm:size-11 place-items-center rounded-xl sm:rounded-2xl bg-accent text-primary">
+            <Icon className="size-4 sm:size-5" />
           </div>
-          <span className="status-pill">{trend}</span>
+          <span className="status-pill text-[0.6rem] sm:text-[0.68rem] px-2 sm:px-2.5">{trend}</span>
         </div>
-        <p className="mt-4 text-sm font-semibold text-muted-foreground">
+        <p className="mt-3 sm:mt-4 text-xs sm:text-sm font-semibold text-muted-foreground line-clamp-1">
           {label}
         </p>
-        <p className="mt-1 text-2xl font-bold tracking-tight">{value}</p>
+        <p className="mt-0.5 sm:mt-1 text-lg sm:text-2xl font-bold tracking-tight">{value}</p>
       </CardContent>
     </Card>
   )
@@ -153,7 +153,7 @@ export function AdminDataTable({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto thin-scrollbar">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead>
               <tr className="border-b border-border text-xs uppercase tracking-[0.12em] text-muted-foreground">
