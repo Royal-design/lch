@@ -2,6 +2,7 @@
 
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { loginSchema, type LoginSchema } from "@/schemas/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
+import axios, { AxiosError } from "axios"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import {
@@ -23,7 +25,16 @@ import {
 } from "./forms/form-system"
 import SocialLogin from "./social-login"
 
+type LoginResponse = {
+  redirectTo?: string
+}
+
+type ErrorResponse = {
+  error?: string
+}
+
 export function LoginForm() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<LoginSchema>({
@@ -38,12 +49,15 @@ export function LoginForm() {
   })
 
   const onSubmit = async (data: LoginSchema) => {
-    await new Promise((resolve) => setTimeout(resolve, 700))
-    toast.success(
-      data.rememberMe
-        ? "Login form validated. Remember me is on."
-        : "Login form validated."
-    )
+    try {
+      const response = await axios.post<LoginResponse>("/api/auth/login", data)
+
+      toast.success("Login successful.")
+      router.replace(response.data.redirectTo ?? "/dashboard")
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponse>
+      toast.error(error.response?.data?.error ?? "Unable to login")
+    }
   }
 
   return (

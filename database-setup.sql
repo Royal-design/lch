@@ -36,15 +36,34 @@ create table if not exists public.profiles (
   full_name text not null default '',
   email text not null,
   phone text,
+  role text not null default 'user',
   avatar_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  constraint profiles_role_check check (role in ('user', 'admin')),
   constraint profiles_email_format check (position('@' in email) > 1),
   constraint profiles_phone_length check (phone is null or char_length(phone) between 8 and 20)
 );
 
 alter table public.profiles
   add column if not exists avatar_url text;
+
+alter table public.profiles
+  add column if not exists role text not null default 'user';
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'profiles_role_check'
+      and conrelid = 'public.profiles'::regclass
+  ) then
+    alter table public.profiles
+      add constraint profiles_role_check check (role in ('user', 'admin'));
+  end if;
+end;
+$$;
 
 create table if not exists public.wallets (
   id uuid primary key default gen_random_uuid(),
@@ -127,12 +146,13 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name, email, phone, avatar_url)
+  insert into public.profiles (id, full_name, email, phone, role, avatar_url)
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name', ''),
     coalesce(new.email, ''),
     nullif(new.raw_user_meta_data ->> 'phone', ''),
+    'user',
     coalesce(
       nullif(new.raw_user_meta_data ->> 'avatar_url', ''),
       nullif(new.raw_user_meta_data ->> 'picture', '')

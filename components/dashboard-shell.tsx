@@ -10,7 +10,7 @@ import {
   Wallet,
 } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 import { LchLogo } from "@/components/lch-logo"
@@ -105,15 +105,22 @@ function MobileTabIcon({
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { user, loading, initialized, signOut } = useAuthStore()
+  const router = useRouter()
+  const { user, role, loading, initialized, signOut } = useAuthStore()
   const email = user?.email ?? "member@lch.app"
   const initials = email.slice(0, 2).toUpperCase()
 
   useEffect(() => {
     if (initialized && !loading && !user) {
-      window.location.href = "/login"
+      router.replace("/login")
     }
-  }, [initialized, loading, user])
+  }, [initialized, loading, router, user])
+
+  useEffect(() => {
+    if (initialized && !loading && user && role === "admin") {
+      router.replace("/admin")
+    }
+  }, [initialized, loading, role, router, user])
 
   if (loading || !initialized) {
     return (

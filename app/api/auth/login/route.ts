@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, email, phone, avatar_url")
+      .select("id, full_name, email, phone, role, avatar_url")
       .eq("id", data.user.id)
       .single()
 
@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     const response = NextResponse.json({
       message: "Login successful",
       user: profile,
+      redirectTo: profile.role === "admin" ? "/admin" : "/dashboard",
     })
 
     return response
