@@ -34,3 +34,16 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI Assistants
+.claude
+.cursor
+.windsurf
+.opencode
+.roo
+.augment
+.qoder
+.continue
+.kilocode
+.kiro
+.codex

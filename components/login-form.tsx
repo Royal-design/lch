@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { Eye, EyeOff } from "lucide-react"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -29,6 +31,7 @@ import SocialLogin from "./social-login"
 export function LoginForm() {
 
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
@@ -62,12 +65,11 @@ export function LoginForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card>
+      <Card className="fintech-surface rounded-3xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>
-            Kindly login to your account to continue where you left off.
-            We&apos;re excited to have you back!
+            Login to manage your wallet, contributions, and savings plans.
           </CardDescription>
         </CardHeader>
 
@@ -99,7 +101,7 @@ export function LoginForm() {
                       aria-invalid={fieldState.invalid}
                       placeholder="Enter your email"
                       autoComplete="email"
-                      className="py-5"
+                      className="h-12 rounded-2xl bg-background/70 px-4"
                     />
 
                     {fieldState.invalid && (
@@ -117,14 +119,30 @@ export function LoginForm() {
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Password</FieldLabel>
 
-                    <Input
-                      {...field}
-                      type="password"
-                      aria-invalid={fieldState.invalid}
-                      placeholder="Enter your password"
-                      autoComplete="current-password"
-                      className="py-5"
-                    />
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type={showPassword ? "text" : "password"}
+                        aria-invalid={fieldState.invalid}
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                        className="h-12 rounded-2xl bg-background/70 px-4 pr-12"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
+                        onClick={() => setShowPassword((value) => !value)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
+                        <span className="sr-only">Toggle password visibility</span>
+                      </Button>
+                    </div>
 
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -133,16 +151,25 @@ export function LoginForm() {
                 )}
               />
 
+              <div className="flex justify-end">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
               {/* BUTTON */}
-              <Button type="submit" disabled={loading} className="p-5">
+              <Button type="submit" disabled={loading} className="h-12 rounded-2xl">
                 {loading ? "Logging in..." : "Login"}
               </Button>
 
               <FieldDescription className="text-center">
                 Don&apos;t have an account?{" "}
-                <a href="/register" className="underline">
+                <Link href="/signup" className="font-medium text-primary underline">
                   Sign up
-                </a>
+                </Link>
               </FieldDescription>
             </FieldGroup>
           </form>

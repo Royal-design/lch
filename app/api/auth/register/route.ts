@@ -17,14 +17,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { name, gender, location, email, password } = validationResult.data
+    const { fullName, phone, email, password } = validationResult.data
 
     // ONLY SIGNUP (no manual insert)
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, gender, location },
+        data: { full_name: fullName, phone },
         emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
       },
     })

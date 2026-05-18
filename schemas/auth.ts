@@ -17,21 +17,17 @@ export type LoginSchema = z.infer<typeof loginSchema>
 
 export const registerSchema = z
   .object({
-    name: z
+    fullName: z
       .string()
-      .min(1, "Name is required")
-      .min(2, "Name must be at least 2 characters"),
-
-    gender: z.enum(["male", "female"]).refine((val) => val !== null, {
-      message: "Gender is required",
-    }),
-
-    location: z
-      .string()
-      .min(1, "Location is required")
-      .min(2, "Location must be at least 2 characters"),
+      .min(1, "Full name is required")
+      .min(2, "Full name must be at least 2 characters"),
 
     email: z.email("Invalid email address"),
+
+    phone: z
+      .string()
+      .min(1, "Phone number is required")
+      .regex(/^\+?[0-9\s-]{8,15}$/, "Enter a valid phone number"),
 
     password: z
       .string()
@@ -49,21 +45,17 @@ export const registerSchema = z
   })
 
 export const registerSchema2 = z.object({
-  name: z
+  fullName: z
     .string()
-    .min(1, "Name is required")
-    .min(2, "Name must be at least 2 characters"),
-
-  gender: z.enum(["male", "female"]).refine((val) => val !== null, {
-    message: "Gender is required",
-  }),
-
-  location: z
-    .string()
-    .min(1, "Location is required")
-    .min(2, "Location must be at least 2 characters"),
+    .min(1, "Full name is required")
+    .min(2, "Full name must be at least 2 characters"),
 
   email: z.email("Invalid email address"),
+
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(/^\+?[0-9\s-]{8,15}$/, "Enter a valid phone number"),
 
   password: z
     .string()

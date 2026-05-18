@@ -1,16 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import axios, { AxiosError } from "axios"
-import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -31,159 +21,97 @@ import {
 import { Input } from "@/components/ui/input"
 import { registerSchema, type RegisterSchema } from "@/schemas/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
+import axios, { AxiosError } from "axios"
+import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
+type ErrorResponse = {
+  error?: string
+}
+
 export function RegisterForm() {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const form = useForm<RegisterSchema>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: "",
-      gender: "male",
-      location: "",
+      fullName: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
     },
   })
 
-  type ErrorResponse = {
-    error?: string
-  }
-
   const onSubmit = async (data: RegisterSchema) => {
     try {
       setLoading(true)
 
-      const { confirmPassword: _confirmPassword, ...payload } = data
+      await axios.post("/api/auth/register", {
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+      })
 
-      await axios.post("/api/auth/register", payload)
-
-      toast.success("Account created successfully 🎉")
-
+      toast.success("Account created. Please check your email to confirm.")
       window.location.href = "/login"
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>
-
-      const message = error.response?.data?.error || "Something went wrong"
-
-      toast.error(message)
+      toast.error(error.response?.data?.error || "Something went wrong")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Create an account</CardTitle>
-          <CardDescription>Fill in your details to get started</CardDescription>
-        </CardHeader>
+    <Card className="fintech-surface rounded-3xl">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Create your LCH account</CardTitle>
+        <CardDescription>
+          Start with secure access to contribution plans and wallet tracking.
+        </CardDescription>
+      </CardHeader>
 
-        <CardContent className="mt-6">
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <FieldGroup>
-              {/* NAME + GENDER */}
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* NAME */}
-                <Controller
-                  name="name"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Name</FieldLabel>
-                      <Input
-                        {...field}
-                        placeholder="Enter your name"
-                        className="p-5"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
+      <CardContent>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <FieldGroup>
+            <Controller
+              name="fullName"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Full name</FieldLabel>
+                  <Input
+                    {...field}
+                    autoComplete="name"
+                    placeholder="Amina Yusuf"
+                    className="h-12 rounded-2xl bg-background/70 px-4"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
                   )}
-                />
+                </Field>
+              )}
+            />
 
-                {/* GENDER */}
-                <Controller
-                  name="gender"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Gender</FieldLabel>
-
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger className="p-5">
-                          <SelectValue placeholder="Gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-              </div>
-
-              {/* LOCATION + EMAIL */}
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* LOCATION */}
-                <Controller
-                  name="location"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Location</FieldLabel>
-                      <Input
-                        {...field}
-                        placeholder="Enter your location"
-                        className="p-5"
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-
-                {/* EMAIL */}
-                <Controller
-                  name="email"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Email</FieldLabel>
-                      <Input {...field} type="email" className="p-5" />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-              </div>
-
-              {/* PASSWORD */}
+            <div className="grid gap-4 sm:grid-cols-2">
               <Controller
-                name="password"
+                name="email"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Password</FieldLabel>
-                    <Input {...field} type="password" className="p-5" />
+                    <FieldLabel>Email</FieldLabel>
+                    <Input
+                      {...field}
+                      type="email"
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                      className="h-12 rounded-2xl bg-background/70 px-4"
+                    />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
                     )}
@@ -191,36 +119,120 @@ export function RegisterForm() {
                 )}
               />
 
-              {/* CONFIRM PASSWORD */}
               <Controller
-                name="confirmPassword"
+                name="phone"
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Confirm Password</FieldLabel>
-                    <Input {...field} type="password" className="p-5" />
+                    <FieldLabel>Phone number</FieldLabel>
+                    <Input
+                      {...field}
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="+234 801 234 5678"
+                      className="h-12 rounded-2xl bg-background/70 px-4"
+                    />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
                     )}
                   </Field>
                 )}
               />
+            </div>
 
-              {/* BUTTON */}
-              <Button type="submit" disabled={loading} className="p-5">
-                {loading ? "Creating account..." : "Sign Up"}
-              </Button>
+            <Controller
+              name="password"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Password</FieldLabel>
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      placeholder="Create a strong password"
+                      className="h-12 rounded-2xl bg-background/70 px-4 pr-12"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
+                      onClick={() => setShowPassword((value) => !value)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                      <span className="sr-only">Toggle password visibility</span>
+                    </Button>
+                  </div>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
 
-              <FieldDescription className="text-center">
-                Already have an account?{" "}
-                <a href="/login" className="underline">
-                  Login
-                </a>
-              </FieldDescription>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+            <Controller
+              name="confirmPassword"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Confirm password</FieldLabel>
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      type={showConfirmPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      placeholder="Repeat your password"
+                      className="h-12 rounded-2xl bg-background/70 px-4 pr-12"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
+                      onClick={() =>
+                        setShowConfirmPassword((value) => !value)
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                      <span className="sr-only">
+                        Toggle confirm password visibility
+                      </span>
+                    </Button>
+                  </div>
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="h-12 rounded-2xl"
+            >
+              {loading ? "Creating account..." : "Create account"}
+            </Button>
+
+            <FieldDescription className="text-center">
+              Already have an account?{" "}
+              <Link href="/login" className="font-medium text-primary underline">
+                Login
+              </Link>
+            </FieldDescription>
+          </FieldGroup>
+        </form>
+      </CardContent>
+    </Card>
   )
 }
