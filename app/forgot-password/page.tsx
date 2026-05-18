@@ -56,9 +56,9 @@ export default function ForgotPasswordPage() {
           <LchLogo />
           <ModeToggle />
         </div>
-        <Card className="fintech-surface rounded-3xl">
+        <Card className="fintech-surface rounded-lg">
           <CardHeader className="text-center">
-            <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <div className="mx-auto grid size-12 place-items-center rounded-lg bg-accent text-primary">
               <Mail className="size-5" />
             </div>
             <CardTitle className="text-2xl">Reset password</CardTitle>
@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
                         type="email"
                         autoComplete="email"
                         placeholder="you@example.com"
-                        className="h-12 rounded-2xl bg-background/70 px-4"
+                        className="h-12 rounded-lg bg-background px-4"
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
                 <Button
                   type="submit"
                   disabled={form.formState.isSubmitting}
-                  className="h-12 rounded-2xl"
+                  className="h-12 rounded-lg"
                 >
                   {form.formState.isSubmitting
                     ? "Sending..."

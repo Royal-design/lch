@@ -16,13 +16,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
 const transactions = [
-  { title: "Ajo contribution", amount: "+ ₦25,000", status: "Successful" },
-  { title: "Locked savings", amount: "₦120,000", status: "Active" },
-  { title: "Wallet deposit", amount: "+ ₦40,000", status: "Settled" },
+  { title: "Ajo contribution", amount: "+NGN 25,000", status: "Successful" },
+  { title: "Locked savings", amount: "NGN 120,000", status: "Active" },
+  { title: "Wallet deposit", amount: "+NGN 40,000", status: "Settled" },
 ]
 
 const trustMetrics = [
-  { icon: LockKeyhole, label: "Locked savings", value: "₦320,000" },
+  { icon: LockKeyhole, label: "Locked savings", value: "NGN 320,000" },
   { icon: ShieldCheck, label: "Active plans", value: "4 running" },
   { icon: Fingerprint, label: "Secure auth", value: "Protected" },
 ]
@@ -37,10 +37,10 @@ export default function Home() {
             <ModeToggle />
           </div>
 
-          <Card className="fintech-surface rounded-3xl">
+          <Card className="fintech-surface rounded-lg">
             <CardContent className="space-y-7 p-6 sm:p-8">
               <div className="space-y-3 text-center sm:text-left">
-                <div className="mx-auto grid size-16 place-items-center rounded-3xl bg-primary text-lg font-black text-primary-foreground shadow-lg shadow-emerald-900/15 sm:mx-0">
+                <div className="mx-auto grid size-14 place-items-center rounded-lg bg-primary text-base font-black text-primary-foreground shadow-sm shadow-slate-950/10 sm:mx-0">
                   LCH
                 </div>
                 <div>
@@ -58,7 +58,7 @@ export default function Home() {
               </div>
 
               <div className="grid gap-3">
-                <Button asChild size="lg" className="h-12 rounded-2xl">
+                <Button asChild size="lg" className="h-12 rounded-lg">
                   <Link href="/login">
                     Login
                     <ArrowRight className="size-4" />
@@ -68,7 +68,7 @@ export default function Home() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="h-12 rounded-2xl bg-card/80"
+                  className="h-12 rounded-lg bg-card"
                 >
                   <Link href="/signup">Create account</Link>
                 </Button>
@@ -76,13 +76,13 @@ export default function Home() {
 
               <div className="grid grid-cols-3 gap-3 text-center">
                 {[
-                  ["₦2.4m", "Managed"],
+                  ["NGN 2.4m", "Managed"],
                   ["18", "Plans"],
                   ["99.9%", "Uptime"],
                 ].map(([value, label]) => (
                   <div
                     key={label}
-                    className="rounded-2xl border border-border bg-muted/50 p-3"
+                    className="rounded-lg border border-border bg-muted/50 p-3"
                   >
                     <p className="text-sm font-bold">{value}</p>
                     <p className="mt-1 text-[0.72rem] text-muted-foreground">
@@ -96,29 +96,29 @@ export default function Home() {
         </div>
 
         <div className="mx-auto w-full max-w-xl">
-          <Card className="fintech-surface rounded-[2rem]">
+          <Card className="fintech-surface rounded-lg">
             <CardContent className="space-y-5 p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Balance</p>
                   <p className="mt-1 text-3xl font-bold tracking-tight">
-                    ₦842,500.00
+                    NGN 842,500.00
                   </p>
                 </div>
-                <Button variant="outline" size="icon" className="rounded-full">
+                <Button variant="outline" size="icon" className="rounded-lg">
                   <Eye className="size-4" />
                   <span className="sr-only">Hide balance</span>
                 </Button>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Button className="h-11 rounded-2xl">
+                <Button className="h-11 rounded-lg">
                   <Plus className="size-4" />
                   Deposit
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-11 rounded-2xl bg-background/60"
+                  className="h-11 rounded-lg bg-background"
                 >
                   <Wallet className="size-4" />
                   Withdraw
@@ -129,20 +129,18 @@ export default function Home() {
                 {trustMetrics.map(({ icon: Icon, label, value }) => (
                   <div
                     key={label}
-                    className="rounded-2xl border border-border bg-muted/40 p-4"
+                    className="rounded-lg border border-border bg-muted/40 p-4"
                   >
                     <Icon className="size-4 text-primary" />
                     <p className="mt-3 text-xs text-muted-foreground">
                       {label}
                     </p>
-                    <p className="mt-1 text-sm font-semibold">
-                      {value}
-                    </p>
+                    <p className="mt-1 text-sm font-semibold">{value}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="rounded-3xl border border-border bg-background/65 p-4">
+              <div className="rounded-lg border border-border bg-background p-4">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="font-semibold">Recent activity</h2>
                   <Bell className="size-4 text-muted-foreground" />
@@ -151,7 +149,7 @@ export default function Home() {
                   {transactions.map((item) => (
                     <div
                       key={item.title}
-                      className="flex items-center justify-between rounded-2xl bg-card p-3 ring-1 ring-border/70"
+                      className="flex items-center justify-between rounded-lg bg-card p-3 ring-1 ring-border/70"
                     >
                       <div>
                         <p className="text-sm font-medium">{item.title}</p>

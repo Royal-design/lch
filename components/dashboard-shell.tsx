@@ -21,12 +21,27 @@ import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/useAuthStore"
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/dashboard/contributions", label: "Contributions", icon: Landmark },
-  { href: "/dashboard/wallet", label: "Wallet", icon: Wallet },
-  { href: "/dashboard/transactions", label: "Transactions", icon: CreditCard },
-  { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
-  { href: "/dashboard/profile", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", shortLabel: "Home", icon: Home },
+  {
+    href: "/dashboard/contributions",
+    label: "Contributions",
+    shortLabel: "Plans",
+    icon: Landmark,
+  },
+  { href: "/dashboard/wallet", label: "Wallet", shortLabel: "Wallet", icon: Wallet },
+  {
+    href: "/dashboard/transactions",
+    label: "Transactions",
+    shortLabel: "Ledger",
+    icon: CreditCard,
+  },
+  {
+    href: "/dashboard/notifications",
+    label: "Notifications",
+    shortLabel: "Alerts",
+    icon: Bell,
+  },
+  { href: "/dashboard/profile", label: "Settings", shortLabel: "Profile", icon: Settings },
 ]
 
 const mobileItems = navItems.filter((item) =>
@@ -38,6 +53,54 @@ const mobileItems = navItems.filter((item) =>
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === href
   return pathname.startsWith(href)
+}
+
+function NavIcon({
+  icon: Icon,
+  active,
+}: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  active: boolean
+}) {
+  return (
+    <span
+      className={cn(
+        "grid size-8 place-items-center rounded-lg border transition-colors",
+        active
+          ? "border-sidebar-primary/20 bg-sidebar-primary/18 text-sidebar-primary-foreground"
+          : "border-sidebar-border bg-white/[0.04] text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground"
+      )}
+    >
+      <Icon className="size-4" />
+    </span>
+  )
+}
+
+function MobileTabIcon({
+  icon: Icon,
+  active,
+}: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  active: boolean
+}) {
+  return (
+    <span
+      className={cn(
+        "relative grid size-10 place-items-center rounded-[1.1rem] transition-all duration-300",
+        active
+          ? "bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(12,36,54,0.22)] dark:shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
+          : "bg-muted/60 text-muted-foreground ring-1 ring-border/80 group-hover:bg-accent group-hover:text-accent-foreground"
+      )}
+    >
+      <span
+        className={cn(
+          "absolute inset-x-2 top-1 h-px rounded-full transition-opacity",
+          active ? "bg-white/45 opacity-100" : "opacity-0"
+        )}
+      />
+      <Icon className="size-[1.05rem]" strokeWidth={active ? 2.4 : 2} />
+    </span>
+  )
 }
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -63,10 +126,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   if (!user) return null
 
   return (
-    <div className="min-h-svh bg-muted/40 text-foreground dark:bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-sidebar-border bg-sidebar/95 px-4 py-5 backdrop-blur xl:block">
+    <div className="min-h-svh bg-[radial-gradient(circle_at_top_left,oklch(0.96_0.018_202),transparent_34rem),linear-gradient(180deg,var(--background),var(--muted))] text-foreground dark:bg-[radial-gradient(circle_at_top_left,oklch(0.23_0.035_215),transparent_32rem),linear-gradient(180deg,var(--background),oklch(0.12_0.018_255))]">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-sidebar-border bg-sidebar px-3 py-4 text-sidebar-foreground lg:block">
         <LchLogo />
-        <nav className="mt-8 space-y-1">
+        <nav className="mt-7 space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon
             const active = isActive(pathname, item.href)
@@ -76,42 +139,40 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex h-11 items-center gap-3 rounded-2xl px-3 text-sm font-medium text-sidebar-foreground/72 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                  "group flex h-12 items-center gap-3 rounded-xl px-2 text-sm font-medium text-sidebar-foreground/68 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-sidebar-ring/40",
                   active &&
-                    "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm shadow-emerald-900/15 hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                    "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm shadow-black/10 hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                 )}
               >
-                <Icon className="size-4" />
+                <NavIcon icon={Icon} active={active} />
                 {item.label}
               </Link>
             )
           })}
         </nav>
-        <div className="absolute bottom-5 left-4 right-4 rounded-3xl border border-sidebar-border bg-sidebar-accent/70 p-4">
-          <p className="text-xs font-semibold text-sidebar-foreground">
-            LCH protected workspace
-          </p>
+        <div className="absolute bottom-4 left-3 right-3 rounded-xl border border-sidebar-border bg-sidebar-accent p-4">
+          <p className="text-xs font-semibold">Protected workspace</p>
           <p className="mt-1 text-xs leading-5 text-sidebar-foreground/62">
-            Theme-aware wallet, savings, and contribution dashboard foundation.
+            Wallet, savings, and contribution operations in one dashboard.
           </p>
         </div>
       </aside>
 
-      <div className="xl:pl-72">
-        <header className="sticky top-0 z-20 border-b border-border/70 bg-background/82 backdrop-blur-xl">
+      <div className="lg:pl-64">
+        <header className="sticky top-0 z-20 border-b border-border/70 bg-background/84 backdrop-blur-2xl">
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="xl:hidden">
+            <div className="lg:hidden">
               <LchLogo compact />
             </div>
-            <div className="hidden xl:block">
+            <div className="hidden lg:block">
               <p className="text-sm text-muted-foreground">Welcome back</p>
               <h1 className="text-lg font-semibold tracking-tight">
-                Financial dashboard
+                Operations dashboard
               </h1>
             </div>
             <div className="flex items-center gap-2">
               <ModeToggle />
-              <Button variant="outline" size="icon" className="rounded-full">
+              <Button variant="outline" size="icon" className="rounded-lg">
                 <Bell className="size-4" />
                 <span className="sr-only">Notifications</span>
               </Button>
@@ -123,7 +184,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden rounded-full sm:inline-flex"
+                className="hidden rounded-lg sm:inline-flex"
                 onClick={signOut}
               >
                 <LogOut className="size-4" />
@@ -133,12 +194,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="px-4 pb-28 pt-5 sm:px-6 lg:px-8 xl:pb-10">
+        <main className="px-4 pb-36 pt-5 sm:px-6 lg:px-8 lg:pb-10">
           {children}
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/80 bg-background/92 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-2 backdrop-blur-xl xl:hidden">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-36 bg-background/55 backdrop-blur-2xl [mask-image:linear-gradient(to_top,black_35%,transparent)] dark:bg-background/45 lg:hidden" />
+      <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 rounded-[1.45rem] border border-white/70 bg-white/82 p-1.5 shadow-[0_22px_55px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-card/82 dark:shadow-[0_24px_60px_rgba(0,0,0,0.38)] lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
           {mobileItems.map((item) => {
             const Icon = item.icon
@@ -149,12 +211,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-[0.68rem] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-                  active && "bg-primary/10 text-primary"
+                  "group flex min-h-[4.65rem] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[1.1rem] text-[0.66rem] font-semibold leading-none text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
+                  active && "text-foreground"
                 )}
               >
-                <Icon className="size-5" />
-                <span>{item.label === "Contributions" ? "Plans" : item.label}</span>
+                <MobileTabIcon icon={Icon} active={active} />
+                <span className="max-w-full truncate">{item.shortLabel}</span>
+                <span
+                  className={cn(
+                    "h-1 w-1 rounded-full bg-primary transition-opacity",
+                    active ? "opacity-100" : "opacity-0"
+                  )}
+                />
               </Link>
             )
           })}

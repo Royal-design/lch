@@ -65,7 +65,7 @@ export function LoginForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card className="fintech-surface rounded-3xl">
+      <Card className="fintech-surface rounded-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>
@@ -101,7 +101,7 @@ export function LoginForm() {
                       aria-invalid={fieldState.invalid}
                       placeholder="Enter your email"
                       autoComplete="email"
-                      className="h-12 rounded-2xl bg-background/70 px-4"
+                      className="h-12 rounded-lg bg-background px-4"
                     />
 
                     {fieldState.invalid && (
@@ -126,13 +126,13 @@ export function LoginForm() {
                         aria-invalid={fieldState.invalid}
                         placeholder="Enter your password"
                         autoComplete="current-password"
-                        className="h-12 rounded-2xl bg-background/70 px-4 pr-12"
+                        className="h-12 rounded-lg bg-background px-4 pr-12"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg"
                         onClick={() => setShowPassword((value) => !value)}
                       >
                         {showPassword ? (
@@ -161,7 +161,7 @@ export function LoginForm() {
               </div>
 
               {/* BUTTON */}
-              <Button type="submit" disabled={loading} className="h-12 rounded-2xl">
+              <Button type="submit" disabled={loading} className="h-12 rounded-lg">
                 {loading ? "Logging in..." : "Login"}
               </Button>
 

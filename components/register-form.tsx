@@ -68,7 +68,7 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="fintech-surface rounded-3xl">
+    <Card className="fintech-surface rounded-lg">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Create your LCH account</CardTitle>
         <CardDescription>
@@ -89,7 +89,7 @@ export function RegisterForm() {
                     {...field}
                     autoComplete="name"
                     placeholder="Amina Yusuf"
-                    className="h-12 rounded-2xl bg-background/70 px-4"
+                    className="h-12 rounded-lg bg-background px-4"
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -110,7 +110,7 @@ export function RegisterForm() {
                       type="email"
                       autoComplete="email"
                       placeholder="you@example.com"
-                      className="h-12 rounded-2xl bg-background/70 px-4"
+                      className="h-12 rounded-lg bg-background px-4"
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -130,7 +130,7 @@ export function RegisterForm() {
                       type="tel"
                       autoComplete="tel"
                       placeholder="+234 801 234 5678"
-                      className="h-12 rounded-2xl bg-background/70 px-4"
+                      className="h-12 rounded-lg bg-background px-4"
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -152,13 +152,13 @@ export function RegisterForm() {
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
                       placeholder="Create a strong password"
-                      className="h-12 rounded-2xl bg-background/70 px-4 pr-12"
+                      className="h-12 rounded-lg bg-background px-4 pr-12"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg"
                       onClick={() => setShowPassword((value) => !value)}
                     >
                       {showPassword ? (
@@ -188,13 +188,13 @@ export function RegisterForm() {
                       type={showConfirmPassword ? "text" : "password"}
                       autoComplete="new-password"
                       placeholder="Repeat your password"
-                      className="h-12 rounded-2xl bg-background/70 px-4 pr-12"
+                      className="h-12 rounded-lg bg-background px-4 pr-12"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg"
                       onClick={() =>
                         setShowConfirmPassword((value) => !value)
                       }
@@ -219,7 +219,7 @@ export function RegisterForm() {
             <Button
               type="submit"
               disabled={loading}
-              className="h-12 rounded-2xl"
+              className="h-12 rounded-lg"
             >
               {loading ? "Creating account..." : "Create account"}
             </Button>

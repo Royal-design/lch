@@ -69,7 +69,7 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[0.8fr_1fr]">
-      <Card className="fintech-surface rounded-3xl">
+      <Card className="fintech-surface rounded-lg">
         <CardContent className="flex flex-col items-center p-6 text-center">
           <Avatar className="size-20 border border-border">
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName} /> : null}
@@ -81,15 +81,17 @@ export default function ProfilePage() {
           <p className="mt-1 text-sm text-muted-foreground">{email}</p>
         </CardContent>
       </Card>
-      <Card className="fintech-surface rounded-3xl">
-        <CardHeader>
+      <Card className="fintech-surface rounded-lg">
+        <CardHeader className="pb-1">
           <CardTitle>Settings</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-2">
           {profileFields.map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-background/60 p-4">
+            <div key={label} className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-4">
               <div className="flex items-center gap-3">
-                <Icon className="size-4 text-primary" />
+                <div className="grid size-9 place-items-center rounded-md bg-accent text-primary">
+                  <Icon className="size-4" />
+                </div>
                 <span className="text-sm text-muted-foreground">{label}</span>
               </div>
               <span className="text-right text-sm font-semibold">
@@ -97,7 +99,7 @@ export default function ProfilePage() {
               </span>
             </div>
           ))}
-          <div className="flex items-center justify-between rounded-2xl border border-border bg-background/60 p-4">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-background p-4">
             <div>
               <p className="text-sm font-semibold">Appearance</p>
               <p className="mt-1 text-xs text-muted-foreground">
