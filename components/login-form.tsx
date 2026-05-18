@@ -3,7 +3,7 @@
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import axios, { AxiosError } from "axios"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { useAuthStore } from "@/store/useAuthStore"
 import {
   FormCard,
   FormFieldShell,
@@ -36,6 +37,13 @@ type ErrorResponse = {
 export function LoginForm() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const { user, role, loading, initialized } = useAuthStore()
+
+  useEffect(() => {
+    if (initialized && !loading && user) {
+      router.replace(role === "admin" ? "/admin" : "/dashboard")
+    }
+  }, [initialized, loading, user, role, router])
 
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
@@ -53,6 +61,7 @@ export function LoginForm() {
       const response = await axios.post<LoginResponse>("/api/auth/login", data)
 
       toast.success("Login successful.")
+      router.refresh()
       router.replace(response.data.redirectTo ?? "/dashboard")
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>
@@ -73,8 +82,6 @@ export function LoginForm() {
           </FieldSeparator>
 
           <form
-            method="POST"
-            id="login-form"
             onSubmit={form.handleSubmit(onSubmit)}
             className="mt-4"
           >

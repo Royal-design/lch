@@ -1,7 +1,8 @@
 "use client"
 
 import { Eye, EyeOff } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -14,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
+import { useAuthStore } from "@/store/useAuthStore"
 import {
   FormCard,
   FormFieldShell,
@@ -26,6 +28,14 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const { user, role, loading: authLoading, initialized } = useAuthStore()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (initialized && !authLoading && user) {
+      router.replace(role === "admin" ? "/admin" : "/dashboard")
+    }
+  }, [initialized, authLoading, user, role, router])
 
   const form = useForm<RegisterSchema>({
     resolver: zodResolver(registerSchema),

@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/useAuthStore"
+import { ProfileDialog } from "@/components/profile-dialog"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", shortLabel: "Home", icon: Home },
@@ -230,11 +231,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Bell className="size-4" />
                 <span className="sr-only">Notifications</span>
               </Button>
-              <Avatar className="size-10 border border-border shadow-sm shadow-slate-950/5">
-                <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <ProfileDialog>
+                <Avatar className="size-10 border border-border shadow-sm shadow-slate-950/5 cursor-pointer transition-transform hover:scale-105">
+                  <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </ProfileDialog>
               <Button
                 variant="ghost"
                 size="icon"

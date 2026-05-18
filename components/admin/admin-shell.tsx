@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/useAuthStore"
 import { useEffect } from "react"
+import { ProfileDialog } from "@/components/profile-dialog"
 
 const mobileAdminItems = [
   { href: "/admin", label: "Overview", shortLabel: "Home", icon: ChartNoAxesCombined },
@@ -67,6 +68,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, role, loading, initialized, signOut } = useAuthStore()
+  const email = user?.email ?? "admin@lch.app"
+  const initials = user?.user_metadata?.full_name
+    ? user.user_metadata.full_name.slice(0, 2).toUpperCase()
+    : email.slice(0, 2).toUpperCase()
 
   useEffect(() => {
     if (initialized && !loading && !user) {
@@ -175,11 +180,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <Bell className="size-4" />
                 <span className="sr-only">Notifications</span>
               </Button>
-              <Avatar className="size-10 border border-border">
-                <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
-                  AD
-                </AvatarFallback>
-              </Avatar>
+              <ProfileDialog>
+                <Avatar className="size-10 border border-border cursor-pointer transition-transform hover:scale-105">
+                  <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </ProfileDialog>
               <Button
                 variant="ghost"
                 size="icon"
