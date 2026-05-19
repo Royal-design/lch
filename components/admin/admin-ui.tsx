@@ -16,6 +16,131 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
+export function SkeletonBlock({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "animate-pulse rounded-xl bg-muted/70 dark:bg-muted/35",
+        className
+      )}
+    />
+  )
+}
+
+export function AdminHeaderSkeleton() {
+  return (
+    <div className="space-y-3">
+      <SkeletonBlock className="h-3 w-28" />
+      <SkeletonBlock className="h-8 w-full max-w-sm" />
+      <SkeletonBlock className="h-4 w-full max-w-xl" />
+    </div>
+  )
+}
+
+export function AdminCardGridSkeleton({
+  count = 6,
+  columns = "grid-cols-2 lg:grid-cols-3",
+}: {
+  count?: number
+  columns?: string
+}) {
+  return (
+    <div className={cn("grid gap-4", columns)}>
+      {Array.from({ length: count }).map((_, index) => (
+        <Card key={index} className="fintech-surface rounded-[1.1rem]">
+          <CardContent className="p-3.5 sm:p-5">
+            <div className="flex items-start justify-between gap-2">
+              <SkeletonBlock className="size-8 sm:size-11 rounded-2xl" />
+              <SkeletonBlock className="h-6 w-14 rounded-full" />
+            </div>
+            <SkeletonBlock className="mt-4 h-4 w-24" />
+            <SkeletonBlock className="mt-2 h-7 w-32" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+export function AdminTableSkeleton({
+  title = true,
+  rows = 6,
+  columns = 6,
+}: {
+  title?: boolean
+  rows?: number
+  columns?: number
+}) {
+  return (
+    <Card className="fintech-surface rounded-[1.35rem]">
+      <CardHeader className="gap-3">
+        {title ? <SkeletonBlock className="h-6 w-40" /> : null}
+        <div className="grid gap-2 sm:grid-cols-[1fr_11rem]">
+          <SkeletonBlock className="h-10 w-full" />
+          <SkeletonBlock className="h-10 w-full" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          <div
+            className="grid gap-3"
+            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+          >
+            {Array.from({ length: columns }).map((_, index) => (
+              <SkeletonBlock key={index} className="h-3" />
+            ))}
+          </div>
+          {Array.from({ length: rows }).map((_, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="grid gap-3 border-t border-border/70 pt-3"
+              style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+            >
+              {Array.from({ length: columns }).map((_, columnIndex) => (
+                <SkeletonBlock
+                  key={columnIndex}
+                  className={cn("h-5", columnIndex === 0 && "w-4/5")}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function AdminPageSkeleton({
+  variant = "table",
+}: {
+  variant?: "overview" | "table" | "cards"
+}) {
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <AdminHeaderSkeleton />
+      {variant === "overview" ? (
+        <>
+          <AdminCardGridSkeleton />
+          <div className="grid gap-5 xl:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Card key={index} className="fintech-surface rounded-[1.35rem]">
+                <CardContent className="space-y-4 p-5">
+                  <SkeletonBlock className="h-5 w-40" />
+                  <SkeletonBlock className="h-56 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      ) : variant === "cards" ? (
+        <AdminCardGridSkeleton count={6} columns="md:grid-cols-2 xl:grid-cols-3" />
+      ) : (
+        <AdminTableSkeleton />
+      )}
+    </div>
+  )
+}
+
 export function AdminPageHeader({
   eyebrow,
   title,

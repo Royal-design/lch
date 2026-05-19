@@ -4,14 +4,14 @@ import { Medal } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 
 import { getAdminData } from "@/components/admin/admin-data"
-import { AdminPageHeader } from "@/components/admin/admin-ui"
+import { AdminPageHeader, AdminPageSkeleton } from "@/components/admin/admin-ui"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
 export default function AdminLeaderboardPage() {
   const { data } = useQuery({ queryKey: ["admin-leaderboard"], queryFn: getAdminData })
 
-  if (!data) return null
+  if (!data) return <AdminPageSkeleton variant="cards" />
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">

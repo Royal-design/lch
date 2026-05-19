@@ -9,7 +9,12 @@ import {
   DepositWithdrawalChart,
 } from "@/components/admin/admin-charts"
 import { getAdminData } from "@/components/admin/admin-data"
-import { AdminPageHeader, KpiCard, StatusBadge } from "@/components/admin/admin-ui"
+import {
+  AdminPageHeader,
+  AdminPageSkeleton,
+  KpiCard,
+  StatusBadge,
+} from "@/components/admin/admin-ui"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -19,7 +24,7 @@ export default function AdminOverviewPage() {
     queryFn: getAdminData,
   })
 
-  if (!data) return null
+  if (!data) return <AdminPageSkeleton variant="overview" />
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">

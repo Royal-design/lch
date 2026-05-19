@@ -5,7 +5,7 @@ import { Search, Shield, UserCheck, UserX } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { AdminPageHeader } from "@/components/admin/admin-ui"
+import { AdminPageHeader, AdminPageSkeleton } from "@/components/admin/admin-ui"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -230,11 +230,7 @@ export default function AdminUsersPage() {
   }
 
   if (usersLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="size-9 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
+    return <AdminPageSkeleton variant="table" />
   }
 
   return (
@@ -439,8 +435,10 @@ export default function AdminUsersPage() {
       <Dialog
         open={actionDialog === "role"}
         onOpenChange={(open) => {
-          !open && setActionDialog(null)
-          !open && setSelectedRole("")
+          if (!open) {
+            setActionDialog(null)
+            setSelectedRole("")
+          }
         }}
       >
         <DialogContent className="rounded-2xl">

@@ -9,6 +9,7 @@ import {
   Users,
   CreditCard,
   Wallet,
+  ListChecks,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -23,13 +24,14 @@ import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/useAuthStore"
 import { useEffect } from "react"
 import { ProfileDialog } from "@/components/profile-dialog"
+import { AdminHeaderSkeleton, SkeletonBlock } from "@/components/admin/admin-ui"
 
 const mobileAdminItems = [
   { href: "/admin", label: "Overview", shortLabel: "Home", icon: ChartNoAxesCombined },
   { href: "/admin/users", label: "Users", shortLabel: "Users", icon: Users },
   { href: "/admin/transactions", label: "Transactions", shortLabel: "Ledger", icon: CreditCard },
   { href: "/admin/withdrawals", label: "Withdrawals", shortLabel: "Payouts", icon: Wallet },
-  { href: "/admin/settings", label: "Settings", shortLabel: "Setup", icon: Settings },
+  { href: "/admin/ajo-types", label: "Ajo Types", shortLabel: "Ajo", icon: ListChecks },
 ]
 
 function isActive(pathname: string, href: string) {
@@ -87,8 +89,35 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (loading || !initialized || !user || role !== "admin") {
     return (
-      <div className="flex min-h-svh items-center justify-center bg-background">
-        <div className="size-9 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="min-h-svh bg-[radial-gradient(circle_at_top_left,oklch(0.94_0.035_155),transparent_32rem),linear-gradient(180deg,var(--background),var(--muted))] p-4 dark:bg-[radial-gradient(circle_at_top_left,oklch(0.23_0.05_155),transparent_30rem),linear-gradient(180deg,var(--background),oklch(0.12_0.018_245))] sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
+            <div className="hidden space-y-4 rounded-[1.35rem] border border-sidebar-border bg-sidebar p-4 lg:block">
+              <SkeletonBlock className="h-9 w-36" />
+              <SkeletonBlock className="h-20 w-full" />
+              {Array.from({ length: 7 }).map((_, index) => (
+                <SkeletonBlock key={index} className="h-11 w-full" />
+              ))}
+            </div>
+            <div className="space-y-6">
+              <div className="rounded-[1.35rem] border border-border/60 bg-background/78 p-5 backdrop-blur-2xl">
+                <AdminHeaderSkeleton />
+              </div>
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="rounded-[1.1rem] border border-border bg-card p-5"
+                  >
+                    <SkeletonBlock className="size-11 rounded-2xl" />
+                    <SkeletonBlock className="mt-4 h-4 w-24" />
+                    <SkeletonBlock className="mt-2 h-7 w-32" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

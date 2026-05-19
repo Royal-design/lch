@@ -1,5 +1,6 @@
 import { CalendarClock, LockKeyhole, Plus, Trophy, TrendingUp } from "lucide-react"
 
+import { AjoTypeMarketplace } from "@/components/ajo-type-marketplace"
 import { AddContributionForm } from "@/components/forms/add-contribution-form"
 import { CreateContributionPlanForm } from "@/components/forms/create-contribution-plan-form"
 import { FormModal } from "@/components/forms/form-system"
@@ -59,6 +60,13 @@ export default function ContributionsPage() {
 
       <div className="grid gap-5 xl:grid-cols-[1fr_0.92fr]">
         <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">Join an Ajo</h2>
+            <div className="mt-3">
+              <AjoTypeMarketplace />
+            </div>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
             {plans.map(([title, saved, target, progress, duration]) => (
               <Card key={title} className="fintech-surface fintech-card-hover rounded-[1.35rem]">

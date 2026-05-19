@@ -4,14 +4,18 @@ import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { getAdminData } from "@/components/admin/admin-data"
-import { AdminPageHeader, StatusBadge } from "@/components/admin/admin-ui"
+import {
+  AdminPageHeader,
+  AdminPageSkeleton,
+  StatusBadge,
+} from "@/components/admin/admin-ui"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function AdminContributionPlansPage() {
   const { data } = useQuery({ queryKey: ["admin-plans"], queryFn: getAdminData })
 
-  if (!data) return null
+  if (!data) return <AdminPageSkeleton variant="cards" />
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">

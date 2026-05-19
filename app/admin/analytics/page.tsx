@@ -9,7 +9,7 @@ import {
   DepositWithdrawalChart,
 } from "@/components/admin/admin-charts"
 import { getAdminData } from "@/components/admin/admin-data"
-import { AdminPageHeader } from "@/components/admin/admin-ui"
+import { AdminPageHeader, AdminPageSkeleton } from "@/components/admin/admin-ui"
 import { Card, CardContent } from "@/components/ui/card"
 
 const insights = [
@@ -21,7 +21,7 @@ const insights = [
 export default function AdminAnalyticsPage() {
   const { data } = useQuery({ queryKey: ["admin-analytics"], queryFn: getAdminData })
 
-  if (!data) return null
+  if (!data) return <AdminPageSkeleton variant="overview" />
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">

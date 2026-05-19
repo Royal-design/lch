@@ -2,13 +2,23 @@ import { supabase } from "@/lib/supabase/client"
 import { FcGoogle } from "react-icons/fc"
 import { Button } from "./ui/button"
 
+function getAuthCallbackUrl() {
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")
+
+  const callbackUrl = new URL("/auth/callback", siteUrl)
+  callbackUrl.searchParams.set("next", "/dashboard")
+
+  return callbackUrl.toString()
+}
+
 export default function SocialLogin() {
   const handleGoogleLogin = async () => {
-    const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000")
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/auth/callback`,
+        redirectTo: getAuthCallbackUrl(),
       },
     })
   }

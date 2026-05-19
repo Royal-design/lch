@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getAdminData } from "@/components/admin/admin-data"
 import {
   AdminPageHeader,
+  AdminPageSkeleton,
   StatusBadge,
   WithdrawalActions,
 } from "@/components/admin/admin-ui"
@@ -16,7 +17,7 @@ export default function AdminWithdrawalsPage() {
     queryFn: getAdminData,
   })
 
-  if (!data) return null
+  if (!data) return <AdminPageSkeleton variant="table" />
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">

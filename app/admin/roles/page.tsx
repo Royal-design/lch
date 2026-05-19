@@ -5,7 +5,7 @@ import { Pencil, Plus, Shield, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { AdminPageHeader } from "@/components/admin/admin-ui"
+import { AdminPageHeader, AdminPageSkeleton } from "@/components/admin/admin-ui"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -201,11 +201,7 @@ export default function AdminRolesPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="size-9 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
+    return <AdminPageSkeleton variant="table" />
   }
 
   return (

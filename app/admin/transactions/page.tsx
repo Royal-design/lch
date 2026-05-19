@@ -5,7 +5,11 @@ import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { getAdminData } from "@/components/admin/admin-data"
-import { AdminDataTable, AdminPageHeader } from "@/components/admin/admin-ui"
+import {
+  AdminDataTable,
+  AdminPageHeader,
+  AdminPageSkeleton,
+} from "@/components/admin/admin-ui"
 import { Button } from "@/components/ui/button"
 
 export default function AdminTransactionsPage() {
@@ -14,7 +18,7 @@ export default function AdminTransactionsPage() {
     queryFn: getAdminData,
   })
 
-  if (!data) return null
+  if (!data) return <AdminPageSkeleton variant="table" />
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">

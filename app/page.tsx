@@ -7,6 +7,8 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 import { LchLogo } from "@/components/lch-logo"
 import { ModeToggle } from "@/components/mode-toggle"
@@ -21,7 +23,14 @@ const trustMetrics = [
 ]
 
 export default function Home() {
+  const router = useRouter()
   const { user, role, signOut, loading, initialized } = useAuthStore()
+
+  useEffect(() => {
+    if (initialized && !loading && user) {
+      router.replace(role === "admin" ? "/admin" : "/dashboard")
+    }
+  }, [initialized, loading, role, router, user])
 
   return (
     <main className="fintech-page flex min-h-svh items-center justify-center px-4 py-4 text-foreground sm:px-6">
