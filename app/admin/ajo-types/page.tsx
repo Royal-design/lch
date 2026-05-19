@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ListChecks, Plus } from "lucide-react"
+import { ListChecks, Pencil, Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { supabase } from "@/lib/supabase/client"
+import { apiRequest } from "@/lib/api-client"
 
 type AjoType = {
   id: string
@@ -70,33 +70,28 @@ function formatCurrency(amount: number) {
 }
 
 async function fetchAjoTypes(): Promise<AjoType[]> {
-  const { data, error } = await supabase
-    .from("ajo_types")
-    .select("*")
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    throw error
-  }
-
-  return data || []
+  const data = await apiRequest<{ ajoTypes: AjoType[] }>("/api/admin/ajo-types")
+  return data.ajoTypes
 }
 
 async function createAjoType(input: AjoTypeInput) {
-  const { error } = await supabase.from("ajo_types").insert({
-    ...input,
-    name: input.name.toLowerCase().trim().replace(/\s+/g, "_"),
-    description: input.description || null,
+  await apiRequest("/api/admin/ajo-types", {
+    method: "POST",
+    body: JSON.stringify(input),
   })
+}
 
-  if (error) {
-    throw error
-  }
+async function updateAjoType(id: string, input: Partial<AjoTypeInput>) {
+  await apiRequest(`/api/admin/ajo-types/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  })
 }
 
 export default function AdminAjoTypesPage() {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
+  const [editingType, setEditingType] = useState<AjoType | null>(null)
   const [form, setForm] = useState<AjoTypeInput>(defaultForm)
 
   const { data: ajoTypes = [], isLoading } = useQuery({
@@ -120,13 +115,60 @@ export default function AdminAjoTypesPage() {
     },
   })
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<AjoTypeInput> }) =>
+      updateAjoType(id, input),
+    onSuccess: () => {
+      toast.success("Ajo type updated.")
+      queryClient.invalidateQueries({ queryKey: ["admin-ajo-types"] })
+      queryClient.invalidateQueries({ queryKey: ["ajo-types"] })
+      setForm(defaultForm)
+      setEditingType(null)
+      setOpen(false)
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to update Ajo type"
+      )
+    },
+  })
+
   const handleCreate = () => {
     if (!form.name || !form.plan_name) {
       toast.error("Type name and plan name are required")
       return
     }
 
+    if (editingType) {
+      updateMutation.mutate({ id: editingType.id, input: form })
+      return
+    }
+
     createMutation.mutate(form)
+  }
+
+  const openEditDialog = (ajoType: AjoType) => {
+    setEditingType(ajoType)
+    setForm({
+      name: ajoType.name,
+      plan_name: ajoType.plan_name,
+      description: ajoType.description || "",
+      target_amount: ajoType.target_amount,
+      min_contribution: ajoType.min_contribution,
+      frequency: ajoType.frequency,
+      withdrawal_access: ajoType.withdrawal_access,
+      lock_duration_months: ajoType.lock_duration_months,
+      member_limit: ajoType.member_limit,
+      status: ajoType.status,
+    })
+    setOpen(true)
+  }
+
+  const setAjoStatus = (
+    ajoType: AjoType,
+    status: "active" | "paused" | "closed"
+  ) => {
+    updateMutation.mutate({ id: ajoType.id, input: { status } })
   }
 
   if (isLoading) return <AdminPageSkeleton variant="cards" />
@@ -139,7 +181,16 @@ export default function AdminAjoTypesPage() {
           title="Joinable Ajo setup"
           description="Create the Ajo categories users can join, with plan names, contribution rules, lock periods, and member limits."
         />
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+          open={open}
+          onOpenChange={(nextOpen) => {
+            setOpen(nextOpen)
+            if (!nextOpen) {
+              setEditingType(null)
+              setForm(defaultForm)
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="h-10 rounded-xl">
               <Plus className="size-4" />
@@ -148,9 +199,13 @@ export default function AdminAjoTypesPage() {
           </DialogTrigger>
           <DialogContent className="rounded-2xl">
             <DialogHeader>
-              <DialogTitle>Create Ajo Type</DialogTitle>
+              <DialogTitle>
+                {editingType ? "Edit Ajo Type" : "Create Ajo Type"}
+              </DialogTitle>
               <DialogDescription>
-                This becomes available on the user contribution page.
+                {editingType
+                  ? "Update the rules users see before joining."
+                  : "This becomes available on the user contribution page."}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 px-6 py-4">
@@ -159,6 +214,7 @@ export default function AdminAjoTypesPage() {
                   <Label>Type name</Label>
                   <Input
                     value={form.name}
+                    disabled={Boolean(editingType)}
                     onChange={(event) =>
                       setForm({ ...form, name: event.target.value })
                     }
@@ -295,6 +351,24 @@ export default function AdminAjoTypesPage() {
                   </SelectContent>
                 </Select>
               </label>
+              <label className="grid gap-2">
+                <Label>Status</Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(value) =>
+                    setForm({ ...form, status: value })
+                  }
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="paused">Paused</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
             </div>
             <DialogFooter>
               <Button
@@ -306,10 +380,14 @@ export default function AdminAjoTypesPage() {
               </Button>
               <Button
                 onClick={handleCreate}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending}
                 className="rounded-xl"
               >
-                {createMutation.isPending ? "Creating..." : "Create"}
+                {createMutation.isPending || updateMutation.isPending
+                  ? "Saving..."
+                  : editingType
+                    ? "Save Changes"
+                    : "Create"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -361,6 +439,44 @@ export default function AdminAjoTypesPage() {
                 {ajoType.lock_duration_months} month lock ·{" "}
                 {ajoType.withdrawal_access.replace("-", " ")}
               </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => openEditDialog(ajoType)}
+                >
+                  <Pencil className="size-3.5" />
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  disabled={ajoType.status === "paused"}
+                  onClick={() => setAjoStatus(ajoType, "paused")}
+                >
+                  Pause
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  disabled={ajoType.status === "active"}
+                  onClick={() => setAjoStatus(ajoType, "active")}
+                >
+                  Activate
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  disabled={ajoType.status === "closed"}
+                  onClick={() => setAjoStatus(ajoType, "closed")}
+                >
+                  Close
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}

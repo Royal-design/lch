@@ -1,44 +1,68 @@
+import { getRequestOrigin, sanitizeNextPath } from "@/lib/auth-redirects"
 import { createClient } from "@/lib/supabase/server"
+import type { EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get("next") ?? "/dashboard"
+  const tokenHash = searchParams.get("token_hash")
+  const type = searchParams.get("type") as EmailOtpType | null
+  const origin = getRequestOrigin(request)
+  const next = sanitizeNextPath(searchParams.get("next"), "/dashboard")
+  const supabase = await createClient()
 
   if (code) {
-    const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      let roleRedirect = next
-
-      if (user && next === "/dashboard") {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single()
-
-        roleRedirect = profile?.role === "admin" ? "/admin" : "/dashboard"
-      }
-
-      const forwardedHost = request.headers.get("x-forwarded-host") // developed or deployed
-      const isLocalEnv = process.env.NODE_ENV === "development"
-      if (isLocalEnv) {
-        // we can be sure that origin is http://localhost:3000
-        return NextResponse.redirect(`${origin}${roleRedirect}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${roleRedirect}`)
-      } else {
-        return NextResponse.redirect(`${origin}${roleRedirect}`)
-      }
+      return NextResponse.redirect(
+        `${origin}${await resolveRedirect(supabase, next)}`
+      )
     }
   }
 
-  // return the user to an error page with instructions
+  if (tokenHash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type,
+    })
+
+    if (!error) {
+      return NextResponse.redirect(
+        `${origin}${await resolveRedirect(supabase, next)}`
+      )
+    }
+  }
+
   return NextResponse.redirect(`${origin}/login?error=auth-code-exchange-failed`)
+}
+
+async function resolveRedirect(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  next: string
+) {
+  if (next !== "/dashboard") {
+    return next
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return "/login"
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, status")
+    .eq("id", user.id)
+    .single()
+
+  if (profile?.status === "suspended") {
+    await supabase.auth.signOut()
+    return "/login?error=account-suspended"
+  }
+
+  return profile?.role === "admin" ? "/admin" : "/dashboard"
 }

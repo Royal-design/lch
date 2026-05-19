@@ -13,12 +13,16 @@ export async function proxy(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
-  const protectedRoutes = ["/dashboard", "/profile", "/settings"]
+  if (pathname.startsWith("/api/auth")) {
+    return updatedResponse
+  }
+
+  const protectedRoutes = ["/dashboard", "/admin", "/profile", "/settings"]
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   )
 
-  const authRoutes = ["/login", "/register"]
+  const authRoutes = ["/login", "/register", "/signup", "/forgot-password"]
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route))
 
   // Not logged in → block protected routes
@@ -26,9 +30,36 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
+  let profile: { role: string; status: string } | null = null
+
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("role, status")
+      .eq("id", user.id)
+      .single()
+
+    profile = data
+
+    if (profile?.status === "suspended") {
+      return NextResponse.redirect(
+        new URL(
+          "/api/auth/logout?next=/login?error=account-suspended",
+          request.url
+        )
+      )
+    }
+
+    if (pathname.startsWith("/admin") && profile?.role !== "admin") {
+      return NextResponse.redirect(new URL("/dashboard", request.url))
+    }
+  }
+
   // Logged in → block auth pages
   if (user && isAuthRoute) {
-    return NextResponse.redirect(new URL("/dashboard", request.url))
+    return NextResponse.redirect(
+      new URL(profile?.role === "admin" ? "/admin" : "/dashboard", request.url)
+    )
   }
 
   // IMPORTANT: return the updated session response

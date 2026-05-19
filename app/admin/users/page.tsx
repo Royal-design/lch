@@ -34,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { supabase } from "@/lib/supabase/client"
+import { apiRequest } from "@/lib/api-client"
 
 interface Profile {
   id: string
@@ -57,73 +57,32 @@ interface ProfileWithWallet extends Profile {
 }
 
 async function fetchUsers(): Promise<ProfileWithWallet[]> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select(
-      `
-      id,
-      full_name,
-      email,
-      phone,
-      role,
-      status,
-      created_at,
-      wallets (balance, locked_balance)
-    `
-    )
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    console.error("Error fetching users:", error)
-    return []
-  }
-
-  return data || []
+  const data = await apiRequest<{ users: ProfileWithWallet[] }>("/api/admin/users")
+  return data.users
 }
 
 async function fetchRoles(): Promise<Role[]> {
-  const { data, error } = await supabase
-    .from("roles")
-    .select("id, name, display_name")
-    .order("created_at", { ascending: true })
-
-  if (error) {
-    console.error("Error fetching roles:", error)
-    return []
-  }
-
-  return data || []
+  const data = await apiRequest<{ roles: Role[] }>("/api/admin/roles")
+  return data.roles
 }
 
 async function updateUserStatus(
   userId: string,
   status: string
 ): Promise<boolean> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ status })
-    .eq("id", userId)
-
-  if (error) {
-    toast.error(`Failed to update status: ${error.message}`)
-    return false
-  }
-
+  await apiRequest(`/api/admin/users/${userId}?action=status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  })
   toast.success(`User ${status === "active" ? "activated" : "suspended"}`)
   return true
 }
 
 async function updateUserRole(userId: string, role: string): Promise<boolean> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ role })
-    .eq("id", userId)
-
-  if (error) {
-    toast.error(`Failed to update role: ${error.message}`)
-    return false
-  }
-
+  await apiRequest(`/api/admin/users/${userId}?action=role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+  })
   toast.success("Role updated successfully")
   return true
 }
@@ -177,6 +136,9 @@ export default function AdminUsersPage() {
         setActionDialog(null)
       }
     },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to update status")
+    },
   })
 
   const roleMutation = useMutation({
@@ -189,6 +151,9 @@ export default function AdminUsersPage() {
         setActionDialog(null)
         setSelectedRole("")
       }
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to update role")
     },
   })
 

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { readRequestBody } from "@/lib/request-body"
 import { loginSchema } from "@/schemas/auth"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -6,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const body = await req.json()
+    const body = await readRequestBody(req)
 
     const validationResult = loginSchema.safeParse(body)
     if (!validationResult.success) {
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, email, phone, role, avatar_url")
+      .select("id, full_name, email, phone, role, status, avatar_url")
       .eq("id", data.user.id)
       .single()
 
@@ -42,6 +43,20 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       )
     }
+
+    if (profile.status === "suspended") {
+      await supabase.auth.signOut()
+
+      return NextResponse.json(
+        { error: "This account has been suspended. Contact support." },
+        { status: 403 }
+      )
+    }
+
+    await supabase
+      .from("profiles")
+      .update({ last_sign_in_at: new Date().toISOString() })
+      .eq("id", data.user.id)
 
     const response = NextResponse.json({
       message: "Login successful",

@@ -1,15 +1,17 @@
 import { createClient } from "@/lib/supabase/server"
-import { registerSchema2 } from "@/schemas/auth"
+import { buildAuthRedirectUrl } from "@/lib/auth-redirects"
+import { readRequestBody } from "@/lib/request-body"
+import { registerSchema } from "@/schemas/auth"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const body = await req.json()
+    const body = await readRequestBody(req)
 
     // Validate input
-    const validationResult = registerSchema2.safeParse(body)
+    const validationResult = registerSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
         { error: validationResult.error.issues[0].message },
@@ -19,13 +21,12 @@ export async function POST(req: NextRequest) {
 
     const { fullName, phone, email, password } = validationResult.data
 
-    // ONLY SIGNUP (no manual insert)
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName, phone },
-        emailRedirectTo: `${req.nextUrl.origin}/auth/callback`,
+        emailRedirectTo: buildAuthRedirectUrl(req, "/dashboard"),
       },
     })
 
@@ -36,8 +37,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message:
-          "Account created successfully. Please check your email to confirm.",
+          "Account created successfully. Please check your email to confirm your account.",
         user: data.user,
+        requiresEmailConfirmation: !data.session,
       },
       { status: 201 }
     )

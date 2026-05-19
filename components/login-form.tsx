@@ -37,7 +37,7 @@ type ErrorResponse = {
 export function LoginForm() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
-  const { user, role, loading, initialized } = useAuthStore()
+  const { user, role, loading, initialized, refreshAuth } = useAuthStore()
 
   useEffect(() => {
     if (initialized && !loading && user) {
@@ -61,6 +61,7 @@ export function LoginForm() {
       const response = await axios.post<LoginResponse>("/api/auth/login", data)
 
       toast.success("Login successful.")
+      await refreshAuth()
       router.refresh()
       router.replace(response.data.redirectTo ?? "/dashboard")
     } catch (err) {
@@ -82,6 +83,8 @@ export function LoginForm() {
           </FieldSeparator>
 
           <form
+            method="post"
+            action="/api/auth/login"
             onSubmit={form.handleSubmit(onSubmit)}
             className="mt-4"
           >

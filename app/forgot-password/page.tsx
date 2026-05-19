@@ -1,6 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import axios, { AxiosError } from "axios"
 import { Mail } from "lucide-react"
 import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
@@ -20,6 +21,14 @@ import {
   type ForgotPasswordSchema,
 } from "@/schemas/auth"
 
+type ForgotPasswordResponse = {
+  message: string
+}
+
+type ErrorResponse = {
+  error?: string
+}
+
 export default function ForgotPasswordPage() {
   const form = useForm<ForgotPasswordSchema>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -29,8 +38,17 @@ export default function ForgotPasswordPage() {
   })
 
   const onSubmit = async (data: ForgotPasswordSchema) => {
-    await new Promise((resolve) => setTimeout(resolve, 650))
-    toast.success(`Recovery flow validated for ${data.email}.`)
+    try {
+      const response = await axios.post<ForgotPasswordResponse>(
+        "/api/auth/forgot-password",
+        data
+      )
+
+      toast.success(response.data.message)
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponse>
+      toast.error(error.response?.data?.error ?? "Unable to send reset link")
+    }
   }
 
   return (
@@ -42,10 +60,14 @@ export default function ForgotPasswordPage() {
         </div>
         <FormCard
           title="Reset password"
-          description="Enter your email and we will send secure recovery instructions."
+          description="Enter the email linked to your LCH account. We will send reset instructions if the account exists."
           icon={<Mail className="size-5" />}
         >
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+            <form
+              method="post"
+              action="/api/auth/forgot-password"
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
               <FieldGroup>
                 <Controller
                   name="email"

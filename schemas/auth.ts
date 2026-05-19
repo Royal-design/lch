@@ -83,6 +83,97 @@ export const forgotPasswordSchema = z.object({
 
 export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>
 
+export const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Use at least 8 characters")
+      .regex(/[A-Z]/, "Add one uppercase letter")
+      .regex(/[a-z]/, "Add one lowercase letter")
+      .regex(/\d/, "Add one number")
+      .regex(/[!@#$%^&*(),.?":{}|<>]/, "Add one special character"),
+    confirmPassword: z.string().min(1, "Confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+    path: ["confirmPassword"],
+  })
+
+export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>
+
+export const profileUpdateSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, "Enter your full name")
+    .max(80, "Full name is too long"),
+  phone: z
+    .string()
+    .regex(/^\+?[0-9\s-]{8,20}$/, "Enter a valid phone number")
+    .optional()
+    .or(z.literal("")),
+  avatarUrl: z.url("Enter a valid avatar URL").optional().or(z.literal("")),
+})
+
+export const userStatusUpdateSchema = z.object({
+  status: z.enum(["active", "suspended"]),
+})
+
+export const userRoleUpdateSchema = z.object({
+  role: z.enum(["user", "admin"]),
+})
+
+export const roleCreateSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Enter a role name")
+    .max(40, "Role name is too long")
+    .transform((value) => value.toLowerCase().trim().replace(/\s+/g, "_")),
+  display_name: z
+    .string()
+    .min(2, "Enter a display name")
+    .max(60, "Display name is too long"),
+  description: z.string().max(160, "Description is too long").optional(),
+})
+
+export const roleUpdateSchema = z.object({
+  display_name: z
+    .string()
+    .min(2, "Enter a display name")
+    .max(60, "Display name is too long"),
+  description: z.string().max(160, "Description is too long").optional(),
+})
+
+export const ajoTypeSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Enter a type name")
+    .max(60, "Type name is too long")
+    .transform((value) => value.toLowerCase().trim().replace(/\s+/g, "_")),
+  plan_name: z
+    .string()
+    .min(3, "Enter a plan name")
+    .max(80, "Plan name is too long"),
+  description: z.string().max(180, "Description is too long").optional(),
+  target_amount: z.number().positive("Target amount must be above zero"),
+  min_contribution: z
+    .number()
+    .positive("Minimum contribution must be above zero"),
+  frequency: z.enum(["daily", "weekly", "monthly"]),
+  withdrawal_access: z.enum(["anytime", "maturity", "owner-controlled"]),
+  lock_duration_months: z
+    .number()
+    .int()
+    .min(1, "Lock duration must be at least 1 month")
+    .max(36, "Lock duration is too long"),
+  member_limit: z.number().int().min(2, "Member limit must be at least 2"),
+  status: z.enum(["active", "paused", "closed"]).default("active"),
+})
+
+export const ajoTypeUpdateSchema = ajoTypeSchema.partial().refine(
+  (value) => Object.keys(value).length > 0,
+  "Provide at least one field to update"
+)
+
 export const contributionPlanSchema = z.object({
   planType: z.enum(["ajo", "personal"], {
     error: "Choose a plan type",

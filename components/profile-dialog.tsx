@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuthStore } from "@/store/useAuthStore"
 import { toast } from "sonner"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   Dialog,
   DialogContent,
@@ -24,13 +25,15 @@ import {
   Loader2,
   CheckCircle2
 } from "lucide-react"
+import { apiRequest } from "@/lib/api-client"
 
 interface ProfileDialogProps {
   children: React.ReactNode
 }
 
 export function ProfileDialog({ children }: ProfileDialogProps) {
-  const { user, role } = useAuthStore()
+  const queryClient = useQueryClient()
+  const { user, role, refreshAuth } = useAuthStore()
   const [activeTab, setActiveTab] = useState<"profile" | "security" | "notifications">("profile")
   const [loading, setLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -54,14 +57,57 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
 
   // Initialize fields on open safely without triggering synchronous cascading renders
   useEffect(() => {
-    if (user) {
-      const timer = setTimeout(() => {
-        setFullName(user.user_metadata?.full_name || "Amina Yusuf")
-        setEmail(user.email || "")
-        setPhone(user.user_metadata?.phone || "+234 801 234 5678")
-        setAvatarUrl(user.user_metadata?.avatar_url || "")
-      }, 0)
-      return () => clearTimeout(timer)
+    if (!isOpen || !user) return
+
+    let ignore = false
+    const activeUser = user
+
+    async function loadProfile() {
+      setLoading(true)
+      try {
+        const data = await apiRequest<{
+          profile: {
+            full_name: string
+            email: string
+            phone: string | null
+            avatar_url: string | null
+          }
+        }>("/api/profile")
+
+        if (!ignore) {
+          setFullName(data.profile.full_name || "")
+          setEmail(data.profile.email || activeUser.email || "")
+          setPhone(data.profile.phone || "")
+          setAvatarUrl(data.profile.avatar_url || "")
+        }
+      } catch {
+        if (!ignore) {
+          setFullName(
+            typeof activeUser.user_metadata?.full_name === "string"
+              ? activeUser.user_metadata.full_name
+              : ""
+          )
+          setEmail(activeUser.email || "")
+          setPhone(
+            typeof activeUser.user_metadata?.phone === "string"
+              ? activeUser.user_metadata.phone
+              : ""
+          )
+          setAvatarUrl(
+            typeof activeUser.user_metadata?.avatar_url === "string"
+              ? activeUser.user_metadata.avatar_url
+              : ""
+          )
+        }
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+
+    loadProfile()
+
+    return () => {
+      ignore = true
     }
   }, [user, isOpen])
 
@@ -84,12 +130,26 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
     e.preventDefault()
     setLoading(true)
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-
-    setLoading(false)
-    toast.success("Profile updated successfully! API integration placeholder executed.")
-    setIsOpen(false)
+    try {
+      await apiRequest("/api/profile", {
+        method: "PATCH",
+        body: JSON.stringify({
+          fullName,
+          phone,
+          avatarUrl,
+        }),
+      })
+      await refreshAuth()
+      queryClient.invalidateQueries({ queryKey: ["profile"] })
+      toast.success("Profile updated successfully.")
+      setIsOpen(false)
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to update profile"
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSecuritySave = async (e: React.FormEvent) => {

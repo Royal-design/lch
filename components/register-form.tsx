@@ -1,7 +1,7 @@
 "use client"
 
 import { Eye, EyeOff } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { registerSchema, type RegisterSchema } from "@/schemas/auth"
 import { zodResolver } from "@hookform/resolvers/zod"
+import axios, { AxiosError } from "axios"
 import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -24,11 +25,25 @@ import {
   SubmitButton,
 } from "./forms/form-system"
 
+type RegisterResponse = {
+  message: string
+  requiresEmailConfirmation?: boolean
+}
+
+type ErrorResponse = {
+  error?: string
+}
+
 export function RegisterForm() {
-  const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const { user, role, loading: authLoading, initialized } = useAuthStore()
+  const {
+    user,
+    role,
+    loading: authLoading,
+    initialized,
+    refreshAuth,
+  } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
@@ -51,10 +66,25 @@ export function RegisterForm() {
   })
 
   const onSubmit = async (data: RegisterSchema) => {
-    setLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    setLoading(false)
-    toast.success(`${data.fullName.split(" ")[0] || "Account"} is ready for Week 2 integration.`)
+    try {
+      const response = await axios.post<RegisterResponse>(
+        "/api/auth/register",
+        data
+      )
+
+      toast.success(response.data.message)
+
+      if (response.data.requiresEmailConfirmation) {
+        router.replace("/login?message=check-email")
+        return
+      }
+
+      await refreshAuth()
+      router.replace("/dashboard")
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponse>
+      toast.error(error.response?.data?.error ?? "Unable to create account")
+    }
   }
 
   return (
@@ -62,7 +92,11 @@ export function RegisterForm() {
       title="Create your LCH account"
       description="Start with secure access to contribution plans and wallet tracking."
     >
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form
+          method="post"
+          action="/api/auth/register"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <FieldGroup>
             <Controller
               name="fullName"
@@ -187,8 +221,7 @@ export function RegisterForm() {
 
             <SubmitButton
               type="submit"
-              disabled={loading}
-              loading={loading}
+              loading={form.formState.isSubmitting}
               loadingText="Creating account..."
             >
               Create account

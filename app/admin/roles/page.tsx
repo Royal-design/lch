@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { supabase } from "@/lib/supabase/client"
+import { apiRequest } from "@/lib/api-client"
 import { Badge } from "../../../components/ui/badge"
 import {
   Table,
@@ -41,17 +41,8 @@ interface Role {
 }
 
 async function fetchRoles(): Promise<Role[]> {
-  const { data, error } = await supabase
-    .from("roles")
-    .select("*")
-    .order("created_at", { ascending: true })
-
-  if (error) {
-    console.error("Error fetching roles:", error)
-    return []
-  }
-
-  return data || []
+  const data = await apiRequest<{ roles: Role[] }>("/api/admin/roles")
+  return data.roles
 }
 
 async function createRole(role: {
@@ -59,13 +50,10 @@ async function createRole(role: {
   display_name: string
   description?: string
 }): Promise<boolean> {
-  const { error } = await supabase.from("roles").insert([role])
-
-  if (error) {
-    toast.error(`Failed to create role: ${error.message}`)
-    return false
-  }
-
+  await apiRequest("/api/admin/roles", {
+    method: "POST",
+    body: JSON.stringify(role),
+  })
   toast.success("Role created successfully")
   return true
 }
@@ -75,31 +63,19 @@ async function updateRole(role: {
   display_name: string
   description?: string
 }): Promise<boolean> {
-  const { error } = await supabase
-    .from("roles")
-    .update({
+  await apiRequest(`/api/admin/roles/${role.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({
       display_name: role.display_name,
       description: role.description,
-    })
-    .eq("id", role.id)
-
-  if (error) {
-    toast.error(`Failed to update role: ${error.message}`)
-    return false
-  }
-
+    }),
+  })
   toast.success("Role updated successfully")
   return true
 }
 
 async function deleteRole(id: string): Promise<boolean> {
-  const { error } = await supabase.from("roles").delete().eq("id", id)
-
-  if (error) {
-    toast.error(`Failed to delete role: ${error.message}`)
-    return false
-  }
-
+  await apiRequest(`/api/admin/roles/${id}`, { method: "DELETE" })
   toast.success("Role deleted successfully")
   return true
 }
@@ -128,6 +104,9 @@ export default function AdminRolesPage() {
         setFormData({ name: "", display_name: "", description: "" })
       }
     },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to create role")
+    },
   })
 
   const updateMutation = useMutation({
@@ -139,6 +118,9 @@ export default function AdminRolesPage() {
         setFormData({ name: "", display_name: "", description: "" })
       }
     },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to update role")
+    },
   })
 
   const deleteMutation = useMutation({
@@ -147,6 +129,9 @@ export default function AdminRolesPage() {
       if (success) {
         queryClient.invalidateQueries({ queryKey: ["admin-roles"] })
       }
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to delete role")
     },
   })
 

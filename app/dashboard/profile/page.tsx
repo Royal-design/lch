@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Mail, Phone, ShieldCheck, User } from "lucide-react"
 
+import { SkeletonBlock } from "@/components/admin/admin-ui"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { supabase } from "@/lib/supabase/client"
+import { apiRequest } from "@/lib/api-client"
 import { useAuthStore } from "@/store/useAuthStore"
 
 type Profile = {
@@ -16,11 +17,18 @@ type Profile = {
   avatar_url: string | null
 }
 
+async function fetchProfile() {
+  const data = await apiRequest<{ profile: Profile }>("/api/profile")
+  return data.profile
+}
+
 export default function ProfilePage() {
   const { user } = useAuthStore()
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile"],
+    queryFn: fetchProfile,
+  })
 
-  const userId = user?.id
   const email = user?.email ?? "member@lch.app"
   const metadataAvatar =
     typeof user?.user_metadata?.avatar_url === "string"
@@ -43,29 +51,29 @@ export default function ProfilePage() {
     { icon: ShieldCheck, label: "Security", value: "Supabase session protected" },
   ]
 
-  useEffect(() => {
-    if (!userId) return
-
-    let ignore = false
-
-    async function loadProfile() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, email, phone, avatar_url")
-        .eq("id", userId)
-        .single()
-
-      if (!ignore) {
-        setProfile(data)
-      }
-    }
-
-    loadProfile()
-
-    return () => {
-      ignore = true
-    }
-  }, [userId])
+  if (isLoading) {
+    return (
+      <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[0.8fr_1fr]">
+        <Card className="fintech-surface rounded-[1.35rem]">
+          <CardContent className="flex flex-col items-center p-6 text-center">
+            <SkeletonBlock className="size-20 rounded-full" />
+            <SkeletonBlock className="mt-4 h-7 w-44" />
+            <SkeletonBlock className="mt-2 h-4 w-56" />
+          </CardContent>
+        </Card>
+        <Card className="fintech-surface rounded-[1.35rem]">
+          <CardHeader>
+            <SkeletonBlock className="h-6 w-28" />
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <SkeletonBlock key={index} className="h-20 w-full" />
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[0.8fr_1fr]">

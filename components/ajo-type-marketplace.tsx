@@ -7,8 +7,7 @@ import { toast } from "sonner"
 import { SkeletonBlock } from "@/components/admin/admin-ui"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { supabase } from "@/lib/supabase/client"
-import { useAuthStore } from "@/store/useAuthStore"
+import { apiRequest } from "@/lib/api-client"
 
 type AjoType = {
   id: string
@@ -31,44 +30,16 @@ function formatCurrency(amount: number) {
 }
 
 async function fetchAjoTypes(): Promise<AjoType[]> {
-  const { data, error } = await supabase
-    .from("ajo_types")
-    .select(
-      "id, plan_name, description, target_amount, min_contribution, frequency, withdrawal_access, lock_duration_months, member_limit"
-    )
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    throw error
-  }
-
-  return data || []
+  const data = await apiRequest<{ ajoTypes: AjoType[] }>("/api/ajo-types")
+  return data.ajoTypes
 }
 
-async function joinAjoType({
-  ajoType,
-  userId,
-}: {
-  ajoType: AjoType
-  userId: string
-}) {
-  const { error } = await supabase.from("contribution_plans").insert({
-    user_id: userId,
-    title: ajoType.plan_name,
-    target_amount: ajoType.target_amount,
-    lock_duration: `${ajoType.lock_duration_months} months`,
-    status: "active",
-  })
-
-  if (error) {
-    throw error
-  }
+async function joinAjoType(ajoTypeId: string) {
+  await apiRequest(`/api/ajo-types/${ajoTypeId}/join`, { method: "POST" })
 }
 
 export function AjoTypeMarketplace() {
   const queryClient = useQueryClient()
-  const { user } = useAuthStore()
   const { data: ajoTypes = [], isLoading, isError } = useQuery({
     queryKey: ["ajo-types"],
     queryFn: fetchAjoTypes,
@@ -79,6 +50,7 @@ export function AjoTypeMarketplace() {
     onSuccess: () => {
       toast.success("Ajo joined. Your plan has been created.")
       queryClient.invalidateQueries({ queryKey: ["ajo-types"] })
+      queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Unable to join Ajo")
@@ -170,10 +142,8 @@ export function AjoTypeMarketplace() {
             </div>
             <Button
               className="h-10 w-full rounded-xl"
-              disabled={!user || joinMutation.isPending}
-              onClick={() =>
-                user && joinMutation.mutate({ ajoType, userId: user.id })
-              }
+              disabled={joinMutation.isPending}
+              onClick={() => joinMutation.mutate(ajoType.id)}
             >
               {joinMutation.isPending ? "Joining..." : "Join Ajo"}
             </Button>
