@@ -154,7 +154,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [initialized, loading, role, router, user])
 
-  if (loading || !initialized) {
+  if (!initialized || (loading && !user)) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background">
         <div className="size-9 animate-spin rounded-full border-4 border-primary border-t-transparent" />

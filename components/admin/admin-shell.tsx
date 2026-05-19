@@ -102,7 +102,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
   }, [initialized, loading, role, router, user])
 
-  if (loading || !initialized || !user || role !== "admin") {
+  if (!initialized || (loading && !user) || !user || role !== "admin") {
     return (
       <div className="min-h-svh bg-[radial-gradient(circle_at_top_left,oklch(0.94_0.035_155),transparent_32rem),linear-gradient(180deg,var(--background),var(--muted))] p-4 dark:bg-[radial-gradient(circle_at_top_left,oklch(0.23_0.05_155),transparent_30rem),linear-gradient(180deg,var(--background),oklch(0.12_0.018_245))] sm:p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-6">

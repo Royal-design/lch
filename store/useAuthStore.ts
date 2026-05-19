@@ -18,6 +18,7 @@ interface AuthState {
   role: string | null
   loading: boolean
   initialized: boolean
+  authListenerStarted: boolean
   setUser: (user: User | null) => void
   setRole: (role: string | null) => void
   setLoading: (loading: boolean) => void
@@ -31,6 +32,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   role: null,
   loading: true,
   initialized: false,
+  authListenerStarted: false,
 
   setUser: (user) => set({ user }),
   setRole: (role) => set({ role }),
@@ -40,9 +42,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       await get().refreshAuth()
 
-      // Listen for auth changes
-      supabase.auth.onAuthStateChange((_event, session) => {
+      if (get().authListenerStarted) return
+
+      set({ authListenerStarted: true })
+
+      supabase.auth.onAuthStateChange((event, session) => {
         const nextUser = session?.user ?? null
+        const currentUser = get().user
+
+        if (event === "SIGNED_OUT" || !nextUser) {
+          set({
+            user: null,
+            role: null,
+            initialized: true,
+            loading: false,
+          })
+          return
+        }
+
+        if (currentUser?.id === nextUser.id) {
+          set({
+            user: nextUser,
+            initialized: true,
+            loading: false,
+          })
+          return
+        }
 
         set({
           user: nextUser,
@@ -72,7 +97,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   refreshAuth: async () => {
-    set({ loading: true })
+    const current = get()
+
+    if (!current.initialized && !current.user) {
+      set({ loading: true })
+    }
 
     try {
       const data = await apiRequest<ProfileResponse>("/api/auth/me")

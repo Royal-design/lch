@@ -34,7 +34,7 @@ interface ProfileDialogProps {
 
 export function ProfileDialog({ children }: ProfileDialogProps) {
   const queryClient = useQueryClient()
-  const { user, role, refreshAuth } = useAuthStore()
+  const { user, role } = useAuthStore()
   const [activeTab, setActiveTab] = useState<
     "profile" | "security" | "notifications"
   >("profile")
@@ -146,7 +146,6 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
       setAvatarUrl(data.avatarUrl)
       setAvatarFile(null)
       queryClient.setQueryData(["profile"], data.profile)
-      await refreshAuth()
       toast.success("Avatar uploaded successfully.")
     } catch (error) {
       setAvatarFile(null)
@@ -178,8 +177,6 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
       setAvatarUrl(data.profile.avatar_url || "")
       setAvatarFile(null)
       queryClient.setQueryData(["profile"], data.profile)
-      await refreshAuth()
-      queryClient.invalidateQueries({ queryKey: ["profile"] })
       toast.success("Profile updated successfully.")
       setIsOpen(false)
     } catch (error) {

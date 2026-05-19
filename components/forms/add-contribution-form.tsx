@@ -1,6 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -20,13 +21,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiRequest } from "@/lib/api-client"
 import {
   addContributionSchema,
   type AddContributionSchema,
   type AddContributionValues,
 } from "@/schemas/auth"
 
+type ContributionPlan = {
+  id: string
+  title: string
+  target_amount: number
+  saved_amount: number
+  status: string
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(Number(amount) || 0)
+}
+
+async function fetchContributionPlans() {
+  const data = await apiRequest<{ plans: ContributionPlan[] }>(
+    "/api/contribution-plans"
+  )
+  return data.plans
+}
+
 export function AddContributionForm({ framed = true }: { framed?: boolean }) {
+  const queryClient = useQueryClient()
+  const { data: plans = [], isLoading } = useQuery({
+    queryKey: ["contribution-plans"],
+    queryFn: fetchContributionPlans,
+  })
   const form = useForm<AddContributionSchema, unknown, AddContributionValues>({
     resolver: zodResolver(addContributionSchema),
     mode: "onBlur",
@@ -37,9 +67,23 @@ export function AddContributionForm({ framed = true }: { framed?: boolean }) {
     },
   })
 
+  const fundablePlans = plans.filter((plan) => {
+    const savedAmount = Number(plan.saved_amount) || 0
+    const targetAmount = Number(plan.target_amount) || 0
+
+    return plan.status === "active" && savedAmount < targetAmount
+  })
+
   const onSubmit = async (data: AddContributionValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 650))
-    toast.success(`Contribution of NGN ${data.amount.toLocaleString("en-NG")} validated.`)
+    await apiRequest(`/api/contribution-plans/${data.planId}/funds`, {
+      method: "POST",
+      body: JSON.stringify({ amount: data.amount }),
+    })
+    toast.success(
+      `Contribution of NGN ${data.amount.toLocaleString("en-NG")} added.`
+    )
+    queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
+    form.reset()
   }
 
   const content = (
@@ -71,16 +115,28 @@ export function AddContributionForm({ framed = true }: { framed?: boolean }) {
             <FormFieldShell
               label="Contribution plan"
               error={fieldState.error?.message}
-              hint="Choose where this money should be recorded."
+              hint="Joined Ajo and personal plans appear here."
             >
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger className="h-12 w-full rounded-xl bg-card/75 px-4">
-                  <SelectValue placeholder="Choose a plan" />
+                  <SelectValue
+                    placeholder={
+                      isLoading ? "Loading plans..." : "Choose a plan"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="family-ajo">Family Ajo Circle</SelectItem>
-                  <SelectItem value="rent">Rent Savings</SelectItem>
-                  <SelectItem value="business">Business Capital</SelectItem>
+                  {fundablePlans.map((plan) => {
+                    const savedAmount = Number(plan.saved_amount) || 0
+                    const targetAmount = Number(plan.target_amount) || 0
+                    const remainingAmount = targetAmount - savedAmount
+
+                    return (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.title} · {formatCurrency(remainingAmount)} left
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </FormFieldShell>
@@ -89,10 +145,13 @@ export function AddContributionForm({ framed = true }: { framed?: boolean }) {
 
         <SubmitButton
           type="submit"
+          disabled={isLoading || fundablePlans.length === 0}
           loading={form.formState.isSubmitting}
           loadingText="Recording..."
         >
-          Add contribution
+          {fundablePlans.length === 0 && !isLoading
+            ? "No active plans"
+            : "Add contribution"}
         </SubmitButton>
       </FieldGroup>
     </form>
