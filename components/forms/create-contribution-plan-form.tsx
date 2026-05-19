@@ -1,6 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQueryClient } from "@tanstack/react-query"
 import { Landmark } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -20,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiRequest } from "@/lib/api-client"
 import {
   contributionPlanSchema,
   type ContributionPlanSchema,
@@ -27,6 +29,7 @@ import {
 } from "@/schemas/auth"
 
 export function CreateContributionPlanForm({ framed = true }: { framed?: boolean }) {
+  const queryClient = useQueryClient()
   const form = useForm<ContributionPlanSchema, unknown, ContributionPlanValues>({
     resolver: zodResolver(contributionPlanSchema),
     mode: "onBlur",
@@ -43,8 +46,13 @@ export function CreateContributionPlanForm({ framed = true }: { framed?: boolean
   })
 
   const onSubmit = async (data: ContributionPlanValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 700))
-    toast.success(`${data.planName} plan is ready to create in Week 2.`)
+    await apiRequest("/api/contribution-plans", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+    toast.success(`${data.planName} plan created.`)
+    queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
+    form.reset()
   }
 
   const content = (

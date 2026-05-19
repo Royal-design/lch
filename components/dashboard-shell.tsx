@@ -9,13 +9,15 @@ import {
   Settings,
   Wallet,
 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 import { LchLogo } from "@/components/lch-logo"
 import { ModeToggle } from "@/components/mode-toggle"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { fetchCurrentProfile } from "@/components/profile-query"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/useAuthStore"
@@ -122,8 +124,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, role, loading, initialized, signOut } = useAuthStore()
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: fetchCurrentProfile,
+    enabled: Boolean(user),
+  })
   const email = user?.email ?? "member@lch.app"
-  const initials = email.slice(0, 2).toUpperCase()
+  const displayName =
+    profile?.full_name ||
+    (typeof user?.user_metadata?.full_name === "string"
+      ? user.user_metadata.full_name
+      : email)
+  const avatarUrl =
+    profile?.avatar_url ||
+    (typeof user?.user_metadata?.avatar_url === "string"
+      ? user.user_metadata.avatar_url
+      : null)
+  const initials = displayName.slice(0, 2).toUpperCase()
 
   useEffect(() => {
     if (initialized && !loading && !user) {
@@ -233,6 +250,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </Button>
               <ProfileDialog>
                 <Avatar className="size-10 border border-border shadow-sm shadow-slate-950/5 cursor-pointer transition-transform hover:scale-105">
+                  {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
                   <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
                     {initials}
                   </AvatarFallback>

@@ -119,7 +119,11 @@ export const userStatusUpdateSchema = z.object({
 })
 
 export const userRoleUpdateSchema = z.object({
-  role: z.enum(["user", "admin"]),
+  role: z
+    .string()
+    .min(2, "Choose a valid role")
+    .max(40, "Role name is too long")
+    .regex(/^[a-z][a-z0-9_]*$/, "Choose a valid role"),
 })
 
 export const roleCreateSchema = z.object({

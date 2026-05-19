@@ -34,6 +34,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       ? { role: userRoleUpdateSchema.parse(body).role }
       : { status: userStatusUpdateSchema.parse(body).status }
 
+  if (action === "role") {
+    const { data: role } = await auth.supabase
+      .from("roles")
+      .select("name")
+      .eq("name", update.role)
+      .single()
+
+    if (!role) {
+      return NextResponse.json(
+        { error: "Choose an existing role" },
+        { status: 400 }
+      )
+    }
+  }
+
   const { data, error } = await auth.supabase
     .from("profiles")
     .update(update)

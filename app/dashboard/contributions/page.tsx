@@ -1,17 +1,12 @@
-import { CalendarClock, LockKeyhole, Plus, Trophy, TrendingUp } from "lucide-react"
+import { Plus, Trophy } from "lucide-react"
 
 import { AjoTypeMarketplace } from "@/components/ajo-type-marketplace"
+import { ContributionPlanList } from "@/components/contribution-plan-list"
 import { AddContributionForm } from "@/components/forms/add-contribution-form"
 import { CreateContributionPlanForm } from "@/components/forms/create-contribution-plan-form"
 import { FormModal } from "@/components/forms/form-system"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-const plans = [
-  ["Family Ajo Circle", "NGN 420,000", "NGN 600,000", "70%", "Owner controlled"],
-  ["Rent Savings", "NGN 275,000", "NGN 800,000", "34%", "Maturity only"],
-  ["Business Capital", "NGN 150,000", "NGN 500,000", "30%", "Anytime access"],
-]
 
 const leaderboard = [
   ["Amina Yusuf", "NGN 120,000", "100%", "1"],
@@ -67,42 +62,7 @@ export default function ContributionsPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {plans.map(([title, saved, target, progress, duration]) => (
-              <Card key={title} className="fintech-surface fintech-card-hover rounded-[1.35rem]">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between gap-3">
-                    <span>{title}</span>
-                    <span className="grid size-10 place-items-center rounded-2xl bg-accent text-primary">
-                      <LockKeyhole className="size-4" />
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-between text-sm">
-                    <p className="text-xl font-bold">{saved}</p>
-                    <p className="text-muted-foreground">{target}</p>
-                  </div>
-                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary"
-                      style={{ width: progress }}
-                    />
-                  </div>
-                  <div className="mt-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarClock className="size-3.5" />
-                      {duration}
-                    </span>
-                    <span className="inline-flex items-center gap-1 font-medium text-primary">
-                      <TrendingUp className="size-3.5" />
-                      {progress}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <ContributionPlanList />
         </section>
 
         <section className="space-y-5">

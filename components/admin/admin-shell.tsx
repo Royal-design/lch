@@ -11,13 +11,15 @@ import {
   Wallet,
   ListChecks,
 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
 import { adminNavItems } from "@/components/admin/admin-data"
 import { LchLogo } from "@/components/lch-logo"
 import { ModeToggle } from "@/components/mode-toggle"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { fetchCurrentProfile } from "@/components/profile-query"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -70,10 +72,23 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, role, loading, initialized, signOut } = useAuthStore()
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: fetchCurrentProfile,
+    enabled: Boolean(user),
+  })
   const email = user?.email ?? "admin@lch.app"
-  const initials = user?.user_metadata?.full_name
-    ? user.user_metadata.full_name.slice(0, 2).toUpperCase()
-    : email.slice(0, 2).toUpperCase()
+  const displayName =
+    profile?.full_name ||
+    (typeof user?.user_metadata?.full_name === "string"
+      ? user.user_metadata.full_name
+      : email)
+  const avatarUrl =
+    profile?.avatar_url ||
+    (typeof user?.user_metadata?.avatar_url === "string"
+      ? user.user_metadata.avatar_url
+      : null)
+  const initials = displayName.slice(0, 2).toUpperCase()
 
   useEffect(() => {
     if (initialized && !loading && !user) {
@@ -82,7 +97,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }, [initialized, loading, router, user])
 
   useEffect(() => {
-    if (initialized && !loading && user && role === "user") {
+    if (initialized && !loading && user && role !== "admin") {
       router.replace("/dashboard")
     }
   }, [initialized, loading, role, router, user])
@@ -211,6 +226,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </Button>
               <ProfileDialog>
                 <Avatar className="size-10 border border-border cursor-pointer transition-transform hover:scale-105">
+                  {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
                   <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
                     {initials}
                   </AvatarFallback>

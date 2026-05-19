@@ -5,28 +5,16 @@ import { Mail, Phone, ShieldCheck, User } from "lucide-react"
 
 import { SkeletonBlock } from "@/components/admin/admin-ui"
 import { ModeToggle } from "@/components/mode-toggle"
+import { fetchCurrentProfile } from "@/components/profile-query"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { apiRequest } from "@/lib/api-client"
 import { useAuthStore } from "@/store/useAuthStore"
-
-type Profile = {
-  full_name: string
-  email: string
-  phone: string | null
-  avatar_url: string | null
-}
-
-async function fetchProfile() {
-  const data = await apiRequest<{ profile: Profile }>("/api/profile")
-  return data.profile
-}
 
 export default function ProfilePage() {
   const { user } = useAuthStore()
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile"],
-    queryFn: fetchProfile,
+    queryFn: fetchCurrentProfile,
   })
 
   const email = user?.email ?? "member@lch.app"

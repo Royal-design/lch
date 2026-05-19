@@ -1,5 +1,6 @@
 "use client"
 
+import { apiRequest } from "@/lib/api-client"
 import { supabase } from "@/lib/supabase/client"
 import { User } from "@supabase/supabase-js"
 import { create } from "zustand"
@@ -7,18 +8,18 @@ import { create } from "zustand"
 type ProfileResponse = {
   user: User | null
   profile: {
-    role: "user" | "admin"
+    role: string
     status: "active" | "suspended"
   } | null
 }
 
 interface AuthState {
   user: User | null
-  role: "user" | "admin" | null
+  role: string | null
   loading: boolean
   initialized: boolean
   setUser: (user: User | null) => void
-  setRole: (role: "user" | "admin" | null) => void
+  setRole: (role: string | null) => void
   setLoading: (loading: boolean) => void
   initAuth: () => Promise<void>
   refreshAuth: () => Promise<void>
@@ -74,33 +75,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true })
 
     try {
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
-        cache: "no-store",
-      })
+      const data = await apiRequest<ProfileResponse>("/api/auth/me")
 
-      if (response.ok) {
-        const data = (await response.json()) as ProfileResponse
-
-        if (data.profile?.status === "suspended") {
-          set({
-            user: null,
-            role: null,
-            initialized: true,
-            loading: false,
-          })
-          return
-        }
-
+      if (data.profile?.status === "suspended") {
         set({
-          user: data.user,
-          role: data.profile?.role ?? null,
+          user: null,
+          role: null,
           initialized: true,
           loading: false,
         })
         return
       }
 
+      set({
+        user: data.user,
+        role: data.profile?.role ?? null,
+        initialized: true,
+        loading: false,
+      })
+      return
+    } catch {
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -114,21 +108,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         initialized: true,
         loading: false,
       })
-    } catch (error) {
-      console.error("Auth refresh error:", error)
-      set({
-        user: null,
-        role: null,
-        initialized: true,
-        loading: false,
-      })
     }
   },
 
   signOut: async () => {
-    await fetch("/api/auth/logout", {
+    await apiRequest("/api/auth/logout", {
       method: "POST",
-      credentials: "include",
     }).catch(() => null)
     await supabase.auth.signOut().catch(() => null)
     set({ user: null, role: null, initialized: true, loading: false })
@@ -136,16 +121,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 }))
 
-async function fetchProfileRole(userId: string): Promise<"user" | "admin"> {
+async function fetchProfileRole(userId: string): Promise<string> {
   const { data, error } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", userId)
     .single()
 
-  if (error || data?.role !== "admin") {
+  if (error || !data?.role) {
     return "user"
   }
 
-  return "admin"
+  return data.role
 }

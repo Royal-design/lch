@@ -15,7 +15,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
   const { id } = await context.params
   const { data: ajoType, error: ajoError } = await auth.supabase
     .from("ajo_types")
-    .select("id, plan_name, target_amount, lock_duration_months, status")
+    .select("id, plan_name, target_amount, lock_duration_months, member_limit, status")
     .eq("id", id)
     .eq("status", "active")
     .single()
@@ -31,7 +31,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     .from("contribution_plans")
     .select("id")
     .eq("user_id", auth.user.id)
-    .eq("title", ajoType.plan_name)
+    .eq("ajo_type_id", ajoType.id)
     .maybeSingle()
 
   if (existingPlan) {
@@ -41,10 +41,31 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     )
   }
 
+  const { count, error: countError } = await auth.supabase
+    .from("contribution_plans")
+    .select("id", { count: "exact", head: true })
+    .eq("ajo_type_id", ajoType.id)
+    .in("status", ["active", "paused"])
+
+  if (countError) {
+    return NextResponse.json(
+      { error: "Unable to confirm Ajo availability" },
+      { status: 500 }
+    )
+  }
+
+  if ((count || 0) >= ajoType.member_limit) {
+    return NextResponse.json(
+      { error: "This Ajo has reached its member limit" },
+      { status: 409 }
+    )
+  }
+
   const { data, error } = await auth.supabase
     .from("contribution_plans")
     .insert({
       user_id: auth.user.id,
+      ajo_type_id: ajoType.id,
       title: ajoType.plan_name,
       target_amount: ajoType.target_amount,
       lock_duration: `${ajoType.lock_duration_months} months`,

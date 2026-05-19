@@ -1,31 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useAuthStore } from "@/store/useAuthStore"
-import { toast } from "sonner"
-import { useQueryClient } from "@tanstack/react-query"
+import type { CurrentProfile } from "@/components/profile-query"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Camera, 
-  Lock, 
-  Bell, 
-  Shield, 
-  Sparkles,
-  Loader2,
-  CheckCircle2
-} from "lucide-react"
 import { apiRequest } from "@/lib/api-client"
+import { useAuthStore } from "@/store/useAuthStore"
+import { useQueryClient } from "@tanstack/react-query"
+import {
+  Bell,
+  Camera,
+  CheckCircle2,
+  Loader2,
+  Lock,
+  Mail,
+  Phone,
+  Shield,
+  Sparkles,
+  User,
+} from "lucide-react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 interface ProfileDialogProps {
   children: React.ReactNode
@@ -34,9 +35,12 @@ interface ProfileDialogProps {
 export function ProfileDialog({ children }: ProfileDialogProps) {
   const queryClient = useQueryClient()
   const { user, role, refreshAuth } = useAuthStore()
-  const [activeTab, setActiveTab] = useState<"profile" | "security" | "notifications">("profile")
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "security" | "notifications"
+  >("profile")
   const [loading, setLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   // Form states
   const [fullName, setFullName] = useState("")
@@ -111,18 +115,47 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
     }
   }, [user, isOpen])
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image file size should be less than 2MB")
-        return
-      }
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setAvatarFile(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image file size should be less than 2MB")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setAvatarFile(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    const formData = new FormData()
+    formData.append("avatar", file)
+
+    setUploadingAvatar(true)
+    try {
+      const data = await apiRequest<{
+        avatarUrl: string
+        profile: CurrentProfile
+      }>("/api/profile/avatar", {
+        method: "POST",
+        body: formData,
+      })
+
+      setAvatarUrl(data.avatarUrl)
+      setAvatarFile(null)
+      queryClient.setQueryData(["profile"], data.profile)
+      await refreshAuth()
+      toast.success("Avatar uploaded successfully.")
+    } catch (error) {
+      setAvatarFile(null)
+      toast.error(
+        error instanceof Error ? error.message : "Unable to upload avatar"
+      )
+    } finally {
+      setUploadingAvatar(false)
+      e.target.value = ""
     }
   }
 
@@ -131,14 +164,20 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
     setLoading(true)
 
     try {
-      await apiRequest("/api/profile", {
-        method: "PATCH",
-        body: JSON.stringify({
-          fullName,
-          phone,
-          avatarUrl,
-        }),
-      })
+      const data = await apiRequest<{ profile: CurrentProfile }>(
+        "/api/profile",
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            fullName,
+            phone,
+            avatarUrl,
+          }),
+        }
+      )
+      setAvatarUrl(data.profile.avatar_url || "")
+      setAvatarFile(null)
+      queryClient.setQueryData(["profile"], data.profile)
       await refreshAuth()
       queryClient.invalidateQueries({ queryKey: ["profile"] })
       toast.success("Profile updated successfully.")
@@ -194,23 +233,22 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none transition-transform hover:scale-105 active:scale-95"
+          className="rounded-full transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
         >
           {children}
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden border border-border/80 bg-background shadow-2xl rounded-[2rem] gap-0">
-        
+      <DialogContent className="gap-0 overflow-hidden rounded-[2rem] border border-border/80 bg-background p-0 shadow-2xl sm:max-w-lg">
         {/* Banner Section */}
-        <div className="relative h-28 w-full bg-gradient-to-r from-primary/90 to-primary-foreground/20 dark:from-primary/30 dark:to-primary-foreground/5 p-6 flex items-end">
-          <div className="absolute top-4 right-4 flex gap-1.5 items-center rounded-full bg-background/20 px-3 py-1 text-[0.66rem] font-bold text-white uppercase tracking-wider backdrop-blur-md">
-            <Sparkles className="size-3 text-primary-foreground dark:text-primary animate-pulse" />
+        <div className="relative flex h-28 w-full items-end bg-gradient-to-r from-primary/90 to-primary-foreground/20 p-6 dark:from-primary/30 dark:to-primary-foreground/5">
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-background/20 px-3 py-1 text-[0.66rem] font-bold tracking-wider text-white uppercase backdrop-blur-md">
+            <Sparkles className="size-3 animate-pulse text-primary-foreground dark:text-primary" />
             {role === "admin" ? "Admin Privileges" : "Member Account"}
           </div>
-          
+
           {/* Avatar Preview */}
           <div className="absolute -bottom-10 left-6 z-10 flex items-end gap-3.5">
-            <div className="relative group size-20 rounded-full border-4 border-background bg-card overflow-hidden shadow-md">
+            <div className="group relative size-20 overflow-hidden rounded-full border-4 border-background bg-card shadow-md">
               <Avatar className="h-full w-full">
                 {avatarFile ? (
                   <AvatarImage src={avatarFile} className="object-cover" />
@@ -218,48 +256,59 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
                   <AvatarImage src={avatarUrl} className="object-cover" />
                 ) : null}
                 <AvatarFallback className="bg-primary/10 text-xl font-bold text-primary">
-                  {initials}
+                  {uploadingAvatar ? (
+                    <Loader2 className="size-5 animate-spin" />
+                  ) : (
+                    initials
+                  )}
                 </AvatarFallback>
               </Avatar>
-              
+              {uploadingAvatar ? (
+                <div className="absolute inset-0 grid place-items-center bg-black/45 text-white">
+                  <Loader2 className="size-5 animate-spin" />
+                </div>
+              ) : null}
+
               {/* Camera Hover Trigger */}
-              <label className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/60 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 <Camera className="size-5 text-white" />
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={handleImageUpload} 
+                <input
+                  aria-label="Upload profile picture"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingAvatar}
+                  onChange={handleImageUpload}
                 />
               </label>
             </div>
             <div className="pb-1.5">
-              <h4 className="text-base font-extrabold tracking-tight leading-none text-foreground drop-shadow-[0_2px_4px_rgba(255,255,255,0.8)] dark:drop-shadow-none">
+              <h4 className="text-base leading-none font-extrabold tracking-tight text-foreground drop-shadow-[0_2px_4px_rgba(255,255,255,0.8)] dark:drop-shadow-none">
                 {fullName || "User Profile"}
               </h4>
-              <p className="text-xs text-muted-foreground mt-1">
-                {email}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{email}</p>
             </div>
           </div>
         </div>
 
         {/* Tab Headers */}
-        <div className="flex border-b border-border bg-muted/30 px-6 pt-12 pb-0 gap-4">
-          {([
-            { id: "profile", label: "Profile Info", icon: User },
-            { id: "security", label: "Security", icon: Lock },
-            { id: "notifications", label: "Preferences", icon: Bell },
-          ] as const).map((tab) => {
+        <div className="flex gap-4 border-b border-border bg-muted/30 px-6 pt-12 pb-0">
+          {(
+            [
+              { id: "profile", label: "Profile Info", icon: User },
+              { id: "security", label: "Security", icon: Lock },
+              { id: "notifications", label: "Preferences", icon: Bell },
+            ] as const
+          ).map((tab) => {
             const Icon = tab.icon
             const active = activeTab === tab.id
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 pb-3 text-xs font-bold transition-all border-b-2 leading-none relative ${
-                  active 
-                    ? "border-primary text-primary" 
+                className={`relative flex items-center gap-2 border-b-2 pb-3 text-xs leading-none font-bold transition-all ${
+                  active
+                    ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -271,86 +320,88 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
         </div>
 
         {/* Content Body */}
-        <div className="px-6 py-5 max-h-[380px] overflow-y-auto thin-scrollbar">
-          
+        <div className="thin-scrollbar max-h-[380px] overflow-y-auto px-6 py-5">
           {/* PROFILE TAB */}
           {activeTab === "profile" && (
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[0.68rem] font-bold text-muted-foreground uppercase tracking-wider">
+                <label className="text-[0.68rem] font-bold tracking-wider text-muted-foreground uppercase">
                   Full Name
                 </label>
                 <div className="relative">
                   <User className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input 
-                    type="text" 
+                  <Input
+                    type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
                     placeholder="Enter full name"
-                    className="h-10 pl-10 rounded-xl"
+                    className="h-10 rounded-xl pl-10"
                   />
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-[0.68rem] font-bold text-muted-foreground uppercase tracking-wider">
+                  <label className="text-[0.68rem] font-bold tracking-wider text-muted-foreground uppercase">
                     Email address
                   </label>
                   <div className="relative">
                     <Mail className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input 
-                      type="email" 
+                    <Input
+                      type="email"
                       value={email}
                       disabled
                       placeholder="email@example.com"
-                      className="h-10 pl-10 rounded-xl bg-muted/40 cursor-not-allowed"
+                      className="h-10 cursor-not-allowed rounded-xl bg-muted/40 pl-10"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[0.68rem] font-bold text-muted-foreground uppercase tracking-wider">
+                  <label className="text-[0.68rem] font-bold tracking-wider text-muted-foreground uppercase">
                     Phone Number
                   </label>
                   <div className="relative">
                     <Phone className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input 
-                      type="tel" 
+                    <Input
+                      type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+234 801 234 5678"
-                      className="h-10 pl-10 rounded-xl"
+                      className="h-10 rounded-xl pl-10"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border bg-muted/20 p-3 flex gap-3 items-start mt-2">
-                <CheckCircle2 className="size-4 text-primary mt-0.5" />
+              <div className="mt-2 flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-3">
+                <CheckCircle2 className="mt-0.5 size-4 text-primary" />
                 <div>
                   <p className="text-[0.72rem] font-bold text-foreground">
-                    Supabase Auth Connected
+                    Cloudinary Avatar Connected
                   </p>
-                  <p className="text-[0.68rem] text-muted-foreground leading-normal mt-0.5">
-                    Your profile data is synchronized with secure end-to-end database encryption.
+                  <p className="mt-0.5 text-[0.68rem] leading-normal text-muted-foreground">
+                    Profile photos upload to Cloudinary and the image URL is
+                    saved with your profile.
                   </p>
                 </div>
               </div>
 
-              <DialogFooter className="pt-4 px-0">
-                <Button 
-                  type="submit" 
+              <DialogFooter className="px-0 pt-4">
+                <Button
+                  type="submit"
                   disabled={loading}
-                  className="w-full sm:w-auto h-10 rounded-xl px-5 text-xs font-bold"
+                  className="h-10 w-full rounded-xl px-5 text-xs font-bold sm:w-auto"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="size-3.5 animate-spin mr-2" />
+                      <Loader2 className="mr-2 size-3.5 animate-spin" />
                       Saving...
                     </>
-                  ) : "Save Profile Details"}
+                  ) : (
+                    "Save Profile Details"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
@@ -360,82 +411,85 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
           {activeTab === "security" && (
             <form onSubmit={handleSecuritySave} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[0.68rem] font-bold text-muted-foreground uppercase tracking-wider">
+                <label className="text-[0.68rem] font-bold tracking-wider text-muted-foreground uppercase">
                   Current Password
                 </label>
                 <div className="relative">
                   <Lock className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input 
-                    type="password" 
+                  <Input
+                    type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="h-10 pl-10 rounded-xl"
+                    className="h-10 rounded-xl pl-10"
                   />
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-[0.68rem] font-bold text-muted-foreground uppercase tracking-wider">
+                  <label className="text-[0.68rem] font-bold tracking-wider text-muted-foreground uppercase">
                     New Password
                   </label>
                   <div className="relative">
                     <Lock className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input 
-                      type="password" 
+                    <Input
+                      type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="h-10 pl-10 rounded-xl"
+                      className="h-10 rounded-xl pl-10"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[0.68rem] font-bold text-muted-foreground uppercase tracking-wider">
+                  <label className="text-[0.68rem] font-bold tracking-wider text-muted-foreground uppercase">
                     Confirm Password
                   </label>
                   <div className="relative">
                     <Lock className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input 
-                      type="password" 
+                    <Input
+                      type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="h-10 pl-10 rounded-xl"
+                      className="h-10 rounded-xl pl-10"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5 flex gap-3 items-start mt-2">
-                <Shield className="size-4 text-primary mt-0.5" />
+              <div className="mt-2 flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-3.5">
+                <Shield className="mt-0.5 size-4 text-primary" />
                 <div>
                   <p className="text-[0.72rem] font-bold text-foreground">
                     Password Requirement
                   </p>
-                  <p className="text-[0.68rem] text-muted-foreground leading-normal mt-0.5">
-                    Password must be at least 6 characters long and contain numbers or special characters.
+                  <p className="mt-0.5 text-[0.68rem] leading-normal text-muted-foreground">
+                    Password must be at least 6 characters long and contain
+                    numbers or special characters.
                   </p>
                 </div>
               </div>
 
-              <DialogFooter className="pt-4 px-0">
-                <Button 
-                  type="submit" 
+              <DialogFooter className="px-0 pt-4">
+                <Button
+                  type="submit"
                   disabled={loading}
-                  className="w-full sm:w-auto h-10 rounded-xl px-5 text-xs font-bold"
+                  className="h-10 w-full rounded-xl px-5 text-xs font-bold sm:w-auto"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="size-3.5 animate-spin mr-2" />
+                      <Loader2 className="mr-2 size-3.5 animate-spin" />
                       Updating...
                     </>
-                  ) : "Update Password"}
+                  ) : (
+                    "Update Password"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
@@ -444,71 +498,88 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
           {/* PREFERENCES TAB */}
           {activeTab === "notifications" && (
             <form onSubmit={handleNotificationsSave} className="space-y-4">
-              <p className="text-xs text-muted-foreground mb-1 leading-relaxed">
-                Configure when and where you receive status notifications, contribution circle activity, and wallet reports.
+              <p className="mb-1 text-xs leading-relaxed text-muted-foreground">
+                Configure when and where you receive status notifications,
+                contribution circle activity, and wallet reports.
               </p>
 
               <div className="space-y-3">
                 {/* Notification Item 1 */}
-                <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-card/60 cursor-pointer hover:bg-card transition-colors">
-                  <div className="space-y-0.5 pr-4 flex-1">
-                    <p className="text-xs font-bold text-foreground">Email Notifications</p>
-                    <p className="text-[0.68rem] text-muted-foreground">Receive deposit receipts, plan summaries, and payout notifications.</p>
+                <label className="flex cursor-pointer items-center justify-between rounded-xl border border-border bg-card/60 p-3 transition-colors hover:bg-card">
+                  <div className="flex-1 space-y-0.5 pr-4">
+                    <p className="text-xs font-bold text-foreground">
+                      Email Notifications
+                    </p>
+                    <p className="text-[0.68rem] text-muted-foreground">
+                      Receive deposit receipts, plan summaries, and payout
+                      notifications.
+                    </p>
                   </div>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={emailAlerts}
                     onChange={(e) => setEmailAlerts(e.target.checked)}
-                    className="size-4 rounded border-border accent-primary cursor-pointer"
+                    className="size-4 cursor-pointer rounded border-border accent-primary"
                   />
                 </label>
 
                 {/* Notification Item 2 */}
-                <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-card/60 cursor-pointer hover:bg-card transition-colors">
-                  <div className="space-y-0.5 pr-4 flex-1">
-                    <p className="text-xs font-bold text-foreground">SMS & Phone Alerts</p>
-                    <p className="text-[0.68rem] text-muted-foreground">Receive instant mobile text notifications for fast-tracked withdrawal confirmation.</p>
+                <label className="flex cursor-pointer items-center justify-between rounded-xl border border-border bg-card/60 p-3 transition-colors hover:bg-card">
+                  <div className="flex-1 space-y-0.5 pr-4">
+                    <p className="text-xs font-bold text-foreground">
+                      SMS & Phone Alerts
+                    </p>
+                    <p className="text-[0.68rem] text-muted-foreground">
+                      Receive instant mobile text notifications for fast-tracked
+                      withdrawal confirmation.
+                    </p>
                   </div>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={smsAlerts}
                     onChange={(e) => setSmsAlerts(e.target.checked)}
-                    className="size-4 rounded border-border accent-primary cursor-pointer"
+                    className="size-4 cursor-pointer rounded border-border accent-primary"
                   />
                 </label>
 
                 {/* Notification Item 3 */}
-                <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-card/60 cursor-pointer hover:bg-card transition-colors">
-                  <div className="space-y-0.5 pr-4 flex-1">
-                    <p className="text-xs font-bold text-foreground">New Device & Login Alerts</p>
-                    <p className="text-[0.68rem] text-muted-foreground">Security log notices when an unfamiliar browser accesses your secure account.</p>
+                <label className="flex cursor-pointer items-center justify-between rounded-xl border border-border bg-card/60 p-3 transition-colors hover:bg-card">
+                  <div className="flex-1 space-y-0.5 pr-4">
+                    <p className="text-xs font-bold text-foreground">
+                      New Device & Login Alerts
+                    </p>
+                    <p className="text-[0.68rem] text-muted-foreground">
+                      Security log notices when an unfamiliar browser accesses
+                      your secure account.
+                    </p>
                   </div>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={loginAlerts}
                     onChange={(e) => setLoginAlerts(e.target.checked)}
-                    className="size-4 rounded border-border accent-primary cursor-pointer"
+                    className="size-4 cursor-pointer rounded border-border accent-primary"
                   />
                 </label>
               </div>
 
-              <DialogFooter className="pt-4 px-0">
-                <Button 
-                  type="submit" 
+              <DialogFooter className="px-0 pt-4">
+                <Button
+                  type="submit"
                   disabled={loading}
-                  className="w-full sm:w-auto h-10 rounded-xl px-5 text-xs font-bold"
+                  className="h-10 w-full rounded-xl px-5 text-xs font-bold sm:w-auto"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="size-3.5 animate-spin mr-2" />
+                      <Loader2 className="mr-2 size-3.5 animate-spin" />
                       Saving...
                     </>
-                  ) : "Save Preferences"}
+                  ) : (
+                    "Save Preferences"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
           )}
-
         </div>
       </DialogContent>
     </Dialog>
