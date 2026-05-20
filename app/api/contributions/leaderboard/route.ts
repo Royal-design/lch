@@ -50,6 +50,8 @@ export async function GET() {
     .in("status", ["active", "paused", "completed"])
 
   if (error) {
+    console.error("Contribution leaderboard query failed", error)
+
     return NextResponse.json(
       { error: "Unable to load leaderboard" },
       { status: 500 }

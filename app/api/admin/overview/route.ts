@@ -63,6 +63,14 @@ export async function GET() {
     transactionsResult.error ||
     notificationsResult.error
   ) {
+    console.error("Admin overview query failed", {
+      users: usersResult.error,
+      plans: plansResult.error,
+      activePlans: activePlansResult.error,
+      transactions: transactionsResult.error,
+      notifications: notificationsResult.error,
+    })
+
     return NextResponse.json(
       { error: "Unable to load admin overview" },
       { status: 500 }

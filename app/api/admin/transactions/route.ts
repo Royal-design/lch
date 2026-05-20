@@ -56,6 +56,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
 
   if (error) {
+    console.error("Admin transactions query failed", error)
+
     return NextResponse.json(
       { error: "Unable to load transactions" },
       { status: 500 }

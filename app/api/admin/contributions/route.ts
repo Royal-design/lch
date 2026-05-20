@@ -91,6 +91,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
 
   if (error) {
+    console.error("Admin contributions query failed", error)
+
     return NextResponse.json(
       { error: "Unable to load contribution records" },
       { status: 500 }
