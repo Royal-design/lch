@@ -81,18 +81,22 @@ export function AddContributionForm({
   })
 
   const onSubmit = async (data: AddContributionValues) => {
-    await apiRequest(`/api/contribution-plans/${data.planId}/funds`, {
-      method: "POST",
-      body: JSON.stringify({ amount: data.amount }),
-    })
-    toast.success(
-      `Contribution of NGN ${data.amount.toLocaleString("en-NG")} added.`
-    )
-    queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
-    queryClient.invalidateQueries({ queryKey: ["contributions"] })
-    queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
-    form.reset()
-    onSuccess?.()
+    try {
+      await apiRequest(`/api/contribution-plans/${data.planId}/funds`, {
+        method: "POST",
+        body: JSON.stringify({ amount: data.amount }),
+      })
+      toast.success(
+        `Contribution of NGN ${data.amount.toLocaleString("en-NG")} added.`
+      )
+      queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
+      queryClient.invalidateQueries({ queryKey: ["contributions"] })
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
+      form.reset()
+      onSuccess?.()
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to add contribution. Please try again.")
+    }
   }
 
   const content = (

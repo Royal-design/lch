@@ -52,14 +52,18 @@ export function CreateContributionPlanForm({
   })
 
   const onSubmit = async (data: ContributionPlanValues) => {
-    await apiRequest("/api/contribution-plans", {
-      method: "POST",
-      body: JSON.stringify(data),
-    })
-    toast.success(`${data.planName} plan created.`)
-    queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
-    form.reset()
-    onSuccess?.()
+    try {
+      await apiRequest("/api/contribution-plans", {
+        method: "POST",
+        body: JSON.stringify(data),
+      })
+      toast.success(`${data.planName} plan created.`)
+      queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
+      form.reset()
+      onSuccess?.()
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to create plan. Please try again.")
+    }
   }
 
   const content = (
