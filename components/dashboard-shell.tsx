@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/useAuthStore"
 import { ProfileDialog } from "@/components/profile-dialog"
+import { MobileNavBar } from "@/components/mobile-nav-bar"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", shortLabel: "Home", icon: Home },
@@ -288,34 +289,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-36 bg-background/55 [mask-image:linear-gradient(to_top,black_35%,transparent)] backdrop-blur-2xl lg:hidden dark:bg-background/45" />
-      <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 rounded-[1.45rem] border border-white/75 bg-white/86 p-1.5 shadow-[0_22px_55px_rgba(15,23,42,0.16)] backdrop-blur-2xl lg:hidden dark:border-white/10 dark:bg-card/82 dark:shadow-[0_24px_60px_rgba(0,0,0,0.38)]">
-        <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
-          {mobileItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(pathname, item.href)
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "group flex min-h-[4.65rem] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[1.1rem] text-[0.66rem] leading-none font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:outline-none",
-                  active && "text-foreground"
-                )}
-              >
-                <MobileTabIcon icon={Icon} active={active} />
-                <span className="max-w-full truncate">{item.shortLabel}</span>
-                <span
-                  className={cn(
-                    "h-1 w-1 rounded-full bg-primary transition-opacity",
-                    active ? "opacity-100" : "opacity-0"
-                  )}
-                />
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
+      <MobileNavBar />
     </div>
   )
 }
