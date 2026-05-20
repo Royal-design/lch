@@ -1,3 +1,5 @@
+"use client"
+
 import { Plus } from "lucide-react"
 
 import { AjoTypeMarketplace } from "@/components/ajo-type-marketplace"
@@ -33,7 +35,9 @@ export default function ContributionsPage() {
               </Button>
             }
           >
-            <CreateContributionPlanForm framed={false} />
+            {(close) => (
+              <CreateContributionPlanForm framed={false} onSuccess={close} />
+            )}
           </FormModal>
           <FormModal
             title="Add contribution"
@@ -44,7 +48,7 @@ export default function ContributionsPage() {
               </Button>
             }
           >
-            <AddContributionForm framed={false} />
+            {(close) => <AddContributionForm framed={false} onSuccess={close} />}
           </FormModal>
         </div>
       </div>

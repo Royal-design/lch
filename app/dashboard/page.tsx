@@ -166,7 +166,12 @@ export default function DashboardPage() {
                   tone: "green",
                   title: "Create contribution plan",
                   description: "Set up an Ajo or personal savings plan.",
-                  form: <CreateContributionPlanForm framed={false} />,
+                  form: (close: () => void) => (
+                    <CreateContributionPlanForm
+                      framed={false}
+                      onSuccess={close}
+                    />
+                  ),
                 },
                 {
                   icon: Plus,
@@ -175,7 +180,7 @@ export default function DashboardPage() {
                   tone: "slate",
                   title: "Deposit funds",
                   description: "Validate a wallet top-up before payment integration.",
-                  form: <DepositForm framed={false} />,
+                  form: () => <DepositForm framed={false} />,
                 },
                 {
                   icon: LockKeyhole,
@@ -184,7 +189,12 @@ export default function DashboardPage() {
                   tone: "blue",
                   title: "Create locked plan",
                   description: "Choose frequency, lock preference, and withdrawal access.",
-                  form: <CreateContributionPlanForm framed={false} />,
+                  form: (close: () => void) => (
+                    <CreateContributionPlanForm
+                      framed={false}
+                      onSuccess={close}
+                    />
+                  ),
                 },
                 {
                   icon: ReceiptText,
@@ -193,7 +203,7 @@ export default function DashboardPage() {
                   tone: "amber",
                   title: "Request statement",
                   description: "Prepare a transaction statement.",
-                  form: <StatementRequestForm framed={false} />,
+                  form: () => <StatementRequestForm framed={false} />,
                 },
               ].map(({ icon, label, caption, tone, title, description, form }) => (
                 <FormModal
@@ -214,7 +224,7 @@ export default function DashboardPage() {
                     </button>
                   }
                 >
-                  {form}
+                  {(close) => form(close)}
                 </FormModal>
               ))}
             </div>

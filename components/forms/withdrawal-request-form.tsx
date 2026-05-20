@@ -40,7 +40,7 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
     control: form.control,
     name: "amount",
   })
-  const amount = parseAmount(watchedAmount ?? "")
+  const amount = parseAmount(String(watchedAmount ?? ""))
   const exceedsBalance = amount > availableBalance
 
   const onSubmit = async (data: WithdrawalRequestValues) => {

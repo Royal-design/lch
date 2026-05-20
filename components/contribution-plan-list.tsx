@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query"
 import { CalendarClock, LockKeyhole, TrendingUp } from "lucide-react"
 
-import { SkeletonBlock } from "@/components/admin/admin-ui"
+import { SkeletonBlock, StatusBadge } from "@/components/admin/admin-ui"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { apiRequest } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
 
 type ContributionPlan = {
   id: string
@@ -71,21 +72,39 @@ export function ContributionPlanList() {
         const progress = targetAmount
           ? Math.min(Math.round((savedAmount / targetAmount) * 100), 100)
           : 0
+        const isLocked = plan.status === "paused"
 
         return (
           <Card
             key={plan.id}
-            className="fintech-surface fintech-card-hover rounded-[1.35rem]"
+            className={cn(
+              "fintech-surface fintech-card-hover rounded-[1.35rem]",
+              isLocked && "border-amber-300/70 bg-amber-50/35 dark:border-amber-400/20 dark:bg-amber-400/5"
+            )}
           >
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-3">
-                <span>{plan.title}</span>
-                <span className="grid size-10 place-items-center rounded-2xl bg-accent text-primary">
+                <span className="min-w-0 truncate">{plan.title}</span>
+                <span
+                  className={cn(
+                    "grid size-10 shrink-0 place-items-center rounded-2xl bg-accent text-primary",
+                    isLocked && "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200"
+                  )}
+                >
                   <LockKeyhole className="size-4" />
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <StatusBadge status={isLocked ? "locked" : plan.status} />
+                {isLocked ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-200">
+                    <LockKeyhole className="size-3.5" />
+                    Contributions blocked
+                  </span>
+                ) : null}
+              </div>
               <div className="flex items-end justify-between text-sm">
                 <p className="text-xl font-bold">{formatCurrency(savedAmount)}</p>
                 <p className="text-muted-foreground">

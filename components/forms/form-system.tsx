@@ -1,7 +1,7 @@
 "use client"
 
 import { Loader2 } from "lucide-react"
-import type * as React from "react"
+import * as React from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -69,20 +69,30 @@ export function FormModal({
   title: string
   description?: string
   trigger: React.ReactNode
-  children: React.ReactNode
+  children: React.ReactNode | ((close: () => void) => React.ReactNode)
   className?: string
 }) {
+  const [open, setOpen] = React.useState(false)
+  const close = () => setOpen(false)
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className={cn("max-h-[92svh] overflow-y-auto", className)}>
+      <DialogContent
+        className={cn(
+          "max-h-[92svh] overflow-y-auto",
+          className
+        )}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? (
             <DialogDescription>{description}</DialogDescription>
           ) : null}
         </DialogHeader>
-        <div className="px-6 pb-6">{children}</div>
+        <div className="px-6 pb-6">
+          {typeof children === "function" ? children(close) : children}
+        </div>
       </DialogContent>
     </Dialog>
   )

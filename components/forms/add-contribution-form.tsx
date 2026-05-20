@@ -51,7 +51,13 @@ async function fetchContributionPlans() {
   return data.plans
 }
 
-export function AddContributionForm({ framed = true }: { framed?: boolean }) {
+export function AddContributionForm({
+  framed = true,
+  onSuccess,
+}: {
+  framed?: boolean
+  onSuccess?: () => void
+}) {
   const queryClient = useQueryClient()
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ["contribution-plans"],
@@ -86,6 +92,7 @@ export function AddContributionForm({ framed = true }: { framed?: boolean }) {
     queryClient.invalidateQueries({ queryKey: ["contributions"] })
     queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
     form.reset()
+    onSuccess?.()
   }
 
   const content = (

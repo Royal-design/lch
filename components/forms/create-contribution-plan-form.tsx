@@ -28,7 +28,13 @@ import {
   type ContributionPlanValues,
 } from "@/schemas/auth"
 
-export function CreateContributionPlanForm({ framed = true }: { framed?: boolean }) {
+export function CreateContributionPlanForm({
+  framed = true,
+  onSuccess,
+}: {
+  framed?: boolean
+  onSuccess?: () => void
+}) {
   const queryClient = useQueryClient()
   const form = useForm<ContributionPlanSchema, unknown, ContributionPlanValues>({
     resolver: zodResolver(contributionPlanSchema),
@@ -53,6 +59,7 @@ export function CreateContributionPlanForm({ framed = true }: { framed?: boolean
     toast.success(`${data.planName} plan created.`)
     queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
     form.reset()
+    onSuccess?.()
   }
 
   const content = (
@@ -100,7 +107,10 @@ export function CreateContributionPlanForm({ framed = true }: { framed?: boolean
                 label="Frequency"
                 error={fieldState.error?.message}
               >
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={String(field.value ?? "")}
+                  onValueChange={field.onChange}
+                >
                   <SelectTrigger className="h-12 w-full rounded-xl bg-card/75 px-4">
                     <SelectValue placeholder="Choose frequency" />
                   </SelectTrigger>
@@ -122,7 +132,10 @@ export function CreateContributionPlanForm({ framed = true }: { framed?: boolean
                 label="Lock preference"
                 error={fieldState.error?.message}
               >
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={String(field.value ?? "")}
+                  onValueChange={field.onChange}
+                >
                   <SelectTrigger className="h-12 w-full rounded-xl bg-card/75 px-4">
                     <SelectValue placeholder="Choose preference" />
                   </SelectTrigger>

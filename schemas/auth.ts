@@ -67,9 +67,10 @@ export const registerSchema2 = z.object({
 export type RegisterSchema = z.infer<typeof registerSchema>
 
 const amountString = z
-  .string()
-  .min(1, "Enter an amount")
-  .transform((value) => Number(value.replace(/[^\d.]/g, "")))
+  .union([z.string().min(1, "Enter an amount"), z.number()])
+  .transform((value) =>
+    typeof value === "number" ? value : Number(value.replace(/[^\d.]/g, ""))
+  )
   .pipe(
     z
       .number("Enter a valid amount")
@@ -196,8 +197,7 @@ export const contributionPlanSchema = z.object({
     error: "Choose withdrawal access",
   }),
   lockDuration: z
-    .string()
-    .min(1, "Choose a lock preference")
+    .union([z.string().min(1, "Choose a lock preference"), z.number()])
     .transform((value) => Number(value))
     .pipe(
       z

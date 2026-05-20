@@ -1,6 +1,8 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Ban, Loader2, LockKeyhole, RotateCcw } from "lucide-react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 import {
@@ -39,6 +41,10 @@ async function fetchAdminPlans() {
 
 export default function AdminContributionPlansPage() {
   const queryClient = useQueryClient()
+  const [pendingAction, setPendingAction] = useState<{
+    id: string
+    status: string
+  } | null>(null)
   const { data: plans } = useQuery({
     queryKey: ["admin-plans"],
     queryFn: fetchAdminPlans,
@@ -59,6 +65,9 @@ export default function AdminContributionPlansPage() {
       toast.error(
         error instanceof Error ? error.message : "Unable to update plan"
       )
+    },
+    onSettled: () => {
+      setPendingAction(null)
     },
   })
 
@@ -88,13 +97,21 @@ export default function AdminContributionPlansPage() {
             const owner =
               plan.profiles?.full_name || plan.profiles?.email || "Unknown user"
             const nextStatus = plan.status === "paused" ? "active" : "paused"
+            const isLockActionPending =
+              pendingAction?.id === plan.id &&
+              ["active", "paused"].includes(pendingAction.status)
+            const isDisableActionPending =
+              pendingAction?.id === plan.id && pendingAction.status === "cancelled"
+            const planIsClosed = ["cancelled", "completed"].includes(plan.status)
 
             return (
               <Card key={plan.id} className="fintech-surface rounded-[1.35rem]">
                 <CardHeader>
                   <CardTitle className="flex items-start justify-between gap-3">
                     <span>{plan.title}</span>
-                    <StatusBadge status={plan.status} />
+                    <StatusBadge
+                      status={plan.status === "paused" ? "locked" : plan.status}
+                    />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -122,31 +139,44 @@ export default function AdminContributionPlansPage() {
                         variant="outline"
                         size="sm"
                         className="rounded-xl"
-                        disabled={statusMutation.isPending}
-                        onClick={() =>
+                        disabled={isLockActionPending || planIsClosed}
+                        onClick={() => {
+                          setPendingAction({ id: plan.id, status: nextStatus })
                           statusMutation.mutate({
                             id: plan.id,
                             status: nextStatus,
                           })
-                        }
+                        }}
                       >
-                        {plan.status === "paused" ? "Resume" : "Pause"}
+                        {isLockActionPending ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : plan.status === "paused" ? (
+                          <RotateCcw className="size-3.5" />
+                        ) : (
+                          <LockKeyhole className="size-3.5" />
+                        )}
+                        {plan.status === "paused" ? "Unlock" : "Lock"}
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         className="rounded-xl"
                         disabled={
-                          statusMutation.isPending ||
-                          plan.status === "cancelled"
+                          isDisableActionPending || plan.status === "cancelled"
                         }
-                        onClick={() =>
+                        onClick={() => {
+                          setPendingAction({ id: plan.id, status: "cancelled" })
                           statusMutation.mutate({
                             id: plan.id,
                             status: "cancelled",
                           })
-                        }
+                        }}
                       >
+                        {isDisableActionPending ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <Ban className="size-3.5" />
+                        )}
                         Disable
                       </Button>
                     </div>
