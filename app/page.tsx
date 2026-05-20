@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
+import { AppLoadingScreen } from "@/components/app-loading-screen"
 import { LchLogo } from "@/components/lch-logo"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
@@ -26,12 +27,22 @@ const trustMetrics = [
 export default function Home() {
   const router = useRouter()
   const { user, role, signOut, loading, initialized } = useAuthStore()
+  const isCheckingSession = !initialized || loading
 
   useEffect(() => {
     if (initialized && !loading && user) {
       router.replace(role === "admin" ? "/admin" : "/dashboard")
     }
   }, [initialized, loading, role, router, user])
+
+  if (isCheckingSession || user) {
+    return (
+      <AppLoadingScreen
+        title="Checking your account"
+        message="We are confirming your session before sending you to the right workspace."
+      />
+    )
+  }
 
   return (
     <main className="fintech-page flex min-h-svh items-center justify-center px-4 py-4 text-foreground sm:px-6">
@@ -95,7 +106,7 @@ export default function Home() {
               </div>
 
               <div className="grid gap-2.5">
-                {initialized && !loading && user ? (
+                {user ? (
                   <>
                     <Button asChild size="lg" className="h-11 rounded-xl text-sm">
                       <Link href={role === "admin" ? "/admin" : "/dashboard"}>

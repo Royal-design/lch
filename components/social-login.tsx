@@ -4,8 +4,9 @@ import { Button } from "./ui/button"
 
 function getAuthCallbackUrl() {
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
 
   const callbackUrl = new URL("/auth/callback", siteUrl)
   callbackUrl.searchParams.set("next", "/dashboard")

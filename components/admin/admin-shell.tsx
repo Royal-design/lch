@@ -176,8 +176,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       <div className="lg:pl-72">
         <header className="sticky top-0 z-20 border-b border-border/60 bg-background/78 backdrop-blur-2xl">
-          <div className="flex min-h-[4.5rem] flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-            <div>
+          <div className="flex h-[4.25rem] items-center justify-between px-4 sm:px-6 lg:h-auto lg:min-h-[4.5rem] lg:flex-row lg:px-8 lg:py-3">
+            <div className="lg:hidden">
+              <ProfileDialog>
+                <Avatar className="size-10 cursor-pointer border border-border shadow-sm shadow-slate-950/5 transition-transform hover:scale-105">
+                  {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
+                  <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </ProfileDialog>
+            </div>
+            <div className="hidden lg:block">
               <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
                 Leenah Contribution Home
               </p>
@@ -198,14 +208,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <Bell className="size-4" />
                 <span className="sr-only">Notifications</span>
               </Button>
-              <ProfileDialog>
-                <Avatar className="size-10 border border-border cursor-pointer transition-transform hover:scale-105">
-                  {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
-                  <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-              </ProfileDialog>
+              <div className="hidden lg:block">
+                <ProfileDialog>
+                  <Avatar className="size-10 cursor-pointer border border-border transition-transform hover:scale-105">
+                    {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
+                    <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </ProfileDialog>
+              </div>
               <Button
                 variant="ghost"
                 size="icon"

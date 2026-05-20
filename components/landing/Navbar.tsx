@@ -10,9 +10,10 @@ import { useAuthStore } from "@/store/useAuthStore"
 import { ModeToggle } from "../mode-toggle"
 
 export default function Navbar() {
-  const { user } = useAuthStore()
+  const { user, role, initialized, loading } = useAuthStore()
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const dashboardHref = role === "admin" ? "/admin" : "/dashboard"
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,13 +58,15 @@ export default function Navbar() {
             <div className="flex items-center gap-4">
               <ModeToggle />
               <div className="flex items-center gap-3">
-                {user ? (
+                {!initialized || loading ? (
+                  <div className="h-8 w-32 rounded-full bg-muted/70" />
+                ) : user ? (
                   <Button
                     asChild
                     size="sm"
                     className="rounded-full px-5 font-semibold active:scale-95 transition-all"
                   >
-                    <Link href="/dashboard">Dashboard</Link>
+                    <Link href={dashboardHref}>Dashboard</Link>
                   </Button>
                 ) : (
                   <>
@@ -120,13 +123,15 @@ export default function Navbar() {
               </Link>
             ))}
             <hr className="border-border" />
-            {user ? (
+            {!initialized || loading ? (
+              <div className="h-10 rounded-full bg-muted/70" />
+            ) : user ? (
               <Button
                 asChild
                 className="rounded-full font-semibold"
                 onClick={() => setIsOpen(false)}
               >
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href={dashboardHref}>Dashboard</Link>
               </Button>
             ) : (
               <>

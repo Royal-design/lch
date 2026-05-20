@@ -14,6 +14,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 
+import { AppLoadingScreen } from "@/components/app-loading-screen"
 import { LchLogo } from "@/components/lch-logo"
 import { ModeToggle } from "@/components/mode-toggle"
 import { fetchCurrentProfile } from "@/components/profile-query"
@@ -58,16 +59,6 @@ const navItems = [
   },
 ]
 
-const mobileItems = navItems.filter((item) =>
-  [
-    "/dashboard",
-    "/dashboard/contributions",
-    "/dashboard/wallet",
-    "/dashboard/notifications",
-    "/dashboard/profile",
-  ].includes(item.href)
-)
-
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === href
   return pathname.startsWith(href)
@@ -90,33 +81,6 @@ function NavIcon({
       )}
     >
       <Icon className="size-4" />
-    </span>
-  )
-}
-
-function MobileTabIcon({
-  icon: Icon,
-  active,
-}: {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  active: boolean
-}) {
-  return (
-    <span
-      className={cn(
-        "relative grid size-10 place-items-center rounded-[1.1rem] transition-all duration-300",
-        active
-          ? "bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(12,36,54,0.22)] dark:shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
-          : "bg-muted/60 text-muted-foreground ring-1 ring-border/80 group-hover:bg-accent group-hover:text-accent-foreground"
-      )}
-    >
-      <span
-        className={cn(
-          "absolute inset-x-2 top-1 h-px rounded-full transition-opacity",
-          active ? "bg-white/45 opacity-100" : "opacity-0"
-        )}
-      />
-      <Icon className="size-[1.05rem]" strokeWidth={active ? 2.4 : 2} />
     </span>
   )
 }
@@ -157,9 +121,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (!initialized || (loading && !user)) {
     return (
-      <div className="flex min-h-svh items-center justify-center bg-background">
-        <div className="size-9 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
+      <AppLoadingScreen
+        title="Opening your dashboard"
+        message="Reading your session and preparing your contribution workspace."
+      />
     )
   }
 

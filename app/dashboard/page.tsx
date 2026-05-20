@@ -15,8 +15,10 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
+import { AppLoadingScreen } from "@/components/app-loading-screen"
 import { CreateContributionPlanForm } from "@/components/forms/create-contribution-plan-form"
 import { DepositForm } from "@/components/forms/deposit-form"
 import { FormModal } from "@/components/forms/form-system"
@@ -32,19 +34,90 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiRequest } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 
-const transactions = [
-  ["Monthly contribution", "+NGN 50,000", "Successful", "Today, 9:24 AM", "in"],
-  ["Locked savings transfer", "NGN 120,000", "Locked", "Yesterday, 6:12 PM", "lock"],
-  ["Wallet withdrawal", "-NGN 18,500", "Processing", "May 16, 2026", "out"],
-]
+type DashboardPlan = {
+  id: string
+  title: string
+  target_amount: number | string
+  saved_amount: number | string
+  lock_duration: string
+  status: string
+  created_at: string
+}
 
-const insights = [
-  { icon: ShieldCheck, label: "Protected funds", value: "NGN 320,000", caption: "38% of balance" },
-  { icon: TrendingUp, label: "Monthly inflow", value: "+18.4%", caption: "vs last month" },
-  { icon: CalendarClock, label: "Next maturity", value: "Jun 24", caption: "Rent Savings" },
-]
+type DashboardTransaction = {
+  id: string
+  type: string
+  amount: number | string
+  status: string
+  reference: string
+  description: string | null
+  created_at: string
+}
+
+type DashboardData = {
+  wallet: {
+    balance: number | string
+    locked_balance: number | string
+  }
+  plans: DashboardPlan[]
+  transactions: DashboardTransaction[]
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(Number(amount) || 0)
+}
+
+function formatCurrencyWithSign(amount: number, type: string) {
+  const sign = type === "withdrawal" ? "-" : "+"
+  return `${sign}${formatCurrency(amount)}`
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-NG", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))
+}
+
+function titleForTransaction(transaction: DashboardTransaction) {
+  if (transaction.description) return transaction.description
+
+  const labels: Record<string, string> = {
+    deposit: "Wallet top up",
+    withdrawal: "Wallet withdrawal",
+    contribution: "Contribution payment",
+    lock: "Locked savings transfer",
+    unlock: "Unlocked savings",
+    adjustment: "Wallet adjustment",
+  }
+
+  return labels[transaction.type] || "Account activity"
+}
+
+function monthsFromLockDuration(value: string) {
+  const match = value.match(/\d+/)
+  return match ? Number(match[0]) : 0
+}
+
+function getMaturityDate(plan: DashboardPlan) {
+  const months = monthsFromLockDuration(plan.lock_duration)
+  if (!months) return null
+
+  const date = new Date(plan.created_at)
+  date.setMonth(date.getMonth() + months)
+  return date
+}
+
+async function fetchDashboardData() {
+  return apiRequest<DashboardData>("/api/dashboard")
+}
 
 function ToneIcon({
   icon: Icon,
@@ -76,13 +149,106 @@ export default function DashboardPage() {
   const [showBalance, setShowBalance] = useState(true)
   const [activityQuery, setActivityQuery] = useState("")
   const [activityStatus, setActivityStatus] = useState("all")
-  const filteredTransactions = transactions.filter(([title, amount, status, time]) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard-data"],
+    queryFn: fetchDashboardData,
+  })
+
+  const dashboard = data ?? {
+    wallet: { balance: 0, locked_balance: 0 },
+    plans: [],
+    transactions: [],
+  }
+  const walletBalance = Number(dashboard.wallet.balance) || 0
+  const lockedBalance = Number(dashboard.wallet.locked_balance) || 0
+  const planSavedTotal = dashboard.plans.reduce(
+    (sum, plan) => sum + (Number(plan.saved_amount) || 0),
+    0
+  )
+  const protectedFunds = lockedBalance + planSavedTotal
+  const activePlans = dashboard.plans.filter((plan) => plan.status === "active")
+  const monthlyInflow = dashboard.transactions
+    .filter((transaction) => {
+      const date = new Date(transaction.created_at)
+      const now = new Date()
+      return (
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear() &&
+        ["deposit", "contribution"].includes(transaction.type)
+      )
+    })
+    .reduce((sum, transaction) => sum + (Number(transaction.amount) || 0), 0)
+  const now = new Date()
+  const nextMaturity = dashboard.plans
+    .map((plan) => ({ plan, date: getMaturityDate(plan) }))
+    .filter((entry): entry is { plan: DashboardPlan; date: Date } =>
+      Boolean(entry.date && entry.date >= now)
+    )
+    .sort((a, b) => a.date.getTime() - b.date.getTime())[0]
+  const insights = [
+    {
+      icon: ShieldCheck,
+      label: "Protected funds",
+      value: formatCurrency(protectedFunds),
+      caption: protectedFunds ? "Locked and plan savings" : "No locked funds yet",
+    },
+    {
+      icon: TrendingUp,
+      label: "Monthly inflow",
+      value: formatCurrency(monthlyInflow),
+      caption: "Recorded this month",
+    },
+    {
+      icon: CalendarClock,
+      label: "Next maturity",
+      value: nextMaturity
+        ? new Intl.DateTimeFormat("en-NG", {
+            month: "short",
+            day: "numeric",
+          }).format(nextMaturity.date)
+        : "Not set",
+      caption: nextMaturity?.plan.title || "Create a locked plan",
+    },
+  ]
+  const activityRows = dashboard.transactions.map((transaction) => {
+    const amount = Number(transaction.amount) || 0
+    const type =
+      transaction.type === "withdrawal"
+        ? "out"
+        : transaction.type === "lock"
+          ? "lock"
+          : "in"
+
+    return {
+      id: transaction.id,
+      title: titleForTransaction(transaction),
+      amount: formatCurrencyWithSign(amount, transaction.type),
+      status: transaction.status,
+      time: formatDate(transaction.created_at),
+      type,
+    }
+  })
+  const filteredTransactions = activityRows.filter((transaction) => {
     const query = activityQuery.toLowerCase()
-    const matchesQuery = `${title} ${amount} ${status} ${time}`.toLowerCase().includes(query)
-    const matchesStatus = activityStatus === "all" || status.toLowerCase() === activityStatus
+    const matchesQuery =
+      `${transaction.title} ${transaction.amount} ${transaction.status} ${transaction.time}`
+        .toLowerCase()
+        .includes(query)
+    const matchesStatus =
+      activityStatus === "all" ||
+      transaction.status.toLowerCase() === activityStatus
 
     return matchesQuery && matchesStatus
   })
+
+  if (isLoading && !data) {
+    return (
+      <AppLoadingScreen
+        title="Loading live dashboard"
+        message="Pulling your wallet, contribution plans, and activity records."
+      />
+    )
+  }
 
   return (
     <div className="mx-auto grid max-w-7xl gap-5">
@@ -99,7 +265,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="mt-4 flex items-center gap-3">
                     <h2 className="text-[2.25rem] font-bold leading-none tracking-tight sm:text-5xl">
-                      {showBalance ? "NGN 842,500.00" : "**********"}
+                      {showBalance ? formatCurrency(walletBalance) : "**********"}
                     </h2>
                     <Button
                       variant="ghost"
@@ -145,9 +311,9 @@ export default function DashboardPage() {
 
               <div className="mt-7 grid gap-3 sm:grid-cols-3">
                 {[
-                  ["Wallet", "NGN 522,500"],
-                  ["Locked", "NGN 320,000"],
-                  ["Plans", "4 active"],
+                  ["Wallet", formatCurrency(walletBalance)],
+                  ["Locked", formatCurrency(protectedFunds)],
+                  ["Plans", `${activePlans.length} active`],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl border border-white/12 bg-white/10 p-4 backdrop-blur">
                     <p className="text-xs font-medium text-white/62">{label}</p>
@@ -162,7 +328,7 @@ export default function DashboardPage() {
                 {
                   icon: Landmark,
                   label: "Plans",
-                  caption: "4 active",
+                  caption: `${activePlans.length} active`,
                   tone: "green",
                   title: "Create contribution plan",
                   description: "Set up an Ajo or personal savings plan.",
@@ -176,7 +342,7 @@ export default function DashboardPage() {
                 {
                   icon: Plus,
                   label: "Fund",
-                  caption: "Instant top up",
+                  caption: "Top up soon",
                   tone: "slate",
                   title: "Deposit funds",
                   description: "Validate a wallet top-up before payment integration.",
@@ -211,9 +377,7 @@ export default function DashboardPage() {
                   title={title}
                   description={description}
                   trigger={
-                    <button
-                      className="group flex min-h-28 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-border/80 bg-card/88 p-3 text-center shadow-sm shadow-slate-950/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-card focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/25 dark:bg-card/72"
-                    >
+                    <button className="group flex min-h-28 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-border/80 bg-card/88 p-3 text-center shadow-sm shadow-slate-950/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-card focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none dark:bg-card/72">
                       <ToneIcon icon={icon} tone={tone} />
                       <span className="grid gap-1">
                         <span className="text-sm font-bold">{label}</span>
@@ -260,23 +424,36 @@ export default function DashboardPage() {
             <CardTitle>Plan progress</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {[
-              ["Family Ajo Circle", "70%", "NGN 420,000 of NGN 600,000"],
-              ["Rent Savings", "34%", "NGN 275,000 of NGN 800,000"],
-            ].map(([title, progress, caption]) => (
-              <div key={title} className="rounded-2xl border border-border/70 bg-background/70 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-bold">{title}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{caption}</p>
-                  </div>
-                  <span className="status-pill">{progress}</span>
-                </div>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-primary" style={{ width: progress }} />
-                </div>
+            {dashboard.plans.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                No contribution plans yet. Create a plan or join an Ajo to start tracking progress.
               </div>
-            ))}
+            ) : (
+              dashboard.plans.slice(0, 4).map((plan) => {
+                const targetAmount = Number(plan.target_amount) || 0
+                const savedAmount = Number(plan.saved_amount) || 0
+                const progressNumber = targetAmount
+                  ? Math.min(100, Math.round((savedAmount / targetAmount) * 100))
+                  : 0
+                const progress = `${progressNumber}%`
+                const caption = `${formatCurrency(savedAmount)} of ${formatCurrency(targetAmount)}`
+
+                return (
+                  <div key={plan.id} className="rounded-2xl border border-border/70 bg-background/70 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold">{plan.title}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{caption}</p>
+                      </div>
+                      <span className="status-pill">{progress}</span>
+                    </div>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
+                      <div className="h-full rounded-full bg-primary" style={{ width: progress }} />
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </CardContent>
         </Card>
 
@@ -285,7 +462,7 @@ export default function DashboardPage() {
             <CardTitle>Recent activity</CardTitle>
             <div className="grid gap-2 sm:grid-cols-[1fr_10rem]">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={activityQuery}
                   onChange={(event) => setActivityQuery(event.target.value)}
@@ -300,18 +477,20 @@ export default function DashboardPage() {
                 <SelectContent position="popper">
                   <SelectItem value="all">All status</SelectItem>
                   <SelectItem value="successful">Successful</SelectItem>
-                  <SelectItem value="locked">Locked</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            {filteredTransactions.map(([title, amount, status, time, type]) => {
+            {filteredTransactions.map(({ id, title, amount, status, time, type }) => {
               const Icon = type === "out" ? ArrowUpRight : type === "lock" ? LockKeyhole : ArrowDownLeft
 
               return (
-                <div key={`${title}-${time}`} className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/20 hover:bg-card sm:grid-cols-[1fr_auto] sm:items-center">
+                <div key={id} className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/20 hover:bg-card sm:grid-cols-[1fr_auto] sm:items-center">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-primary">
                       <Icon className="size-4" />
@@ -322,7 +501,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between gap-4 sm:justify-end sm:text-right">
-                    <span className="status-pill">{status}</span>
+                    <span className="status-pill capitalize">{status}</span>
                     <p className="min-w-28 text-sm font-bold">{amount}</p>
                   </div>
                 </div>

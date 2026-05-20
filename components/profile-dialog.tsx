@@ -243,17 +243,17 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
           {children}
         </button>
       </DialogTrigger>
-      <DialogContent className="gap-0 overflow-hidden rounded-[2rem] border border-border/80 bg-background p-0 shadow-2xl sm:max-w-lg">
+      <DialogContent className="grid-rows-[auto_auto_1fr] gap-0 overflow-hidden rounded-[2rem] border border-border/80 bg-background p-0 shadow-2xl max-sm:h-dvh max-sm:overflow-hidden sm:max-w-lg">
         {/* Banner Section */}
-        <div className="relative flex h-28 w-full items-end bg-gradient-to-r from-primary/90 to-primary-foreground/20 p-6 dark:from-primary/30 dark:to-primary-foreground/5">
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-background/20 px-3 py-1 text-[0.66rem] font-bold tracking-wider text-white uppercase backdrop-blur-md">
+        <div className="relative flex h-28 w-full items-end bg-gradient-to-r from-primary/90 to-primary-foreground/20 p-6 max-sm:h-24 max-sm:p-4 dark:from-primary/30 dark:to-primary-foreground/5">
+          <div className="absolute top-4 right-14 flex items-center gap-1.5 rounded-full bg-background/20 px-3 py-1 text-[0.66rem] font-bold tracking-wider text-white uppercase backdrop-blur-md max-sm:top-5 max-sm:right-16 max-sm:px-2.5">
             <Sparkles className="size-3 animate-pulse text-primary-foreground dark:text-primary" />
             {role === "admin" ? "Admin Privileges" : "Member Account"}
           </div>
 
           {/* Avatar Preview */}
-          <div className="absolute -bottom-10 left-6 z-10 flex items-end gap-3.5">
-            <div className="group relative size-20 overflow-hidden rounded-full border-4 border-background bg-card shadow-md">
+          <div className="absolute -bottom-10 left-6 z-10 flex items-end gap-3.5 max-sm:left-4 max-sm:gap-3">
+            <div className="group relative size-20 overflow-hidden rounded-full border-4 border-background bg-card shadow-md max-sm:size-18">
               <Avatar className="h-full w-full">
                 {avatarFile ? (
                   <AvatarImage src={avatarFile} className="object-cover" />
@@ -297,7 +297,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
         </div>
 
         {/* Tab Headers */}
-        <div className="flex gap-4 border-b border-border bg-muted/30 px-6 pt-12 pb-0">
+        <div className="flex gap-4 border-b border-border bg-muted/30 px-6 pt-12 pb-0 max-sm:gap-2 max-sm:overflow-x-auto max-sm:px-4 max-sm:pt-11">
           {(
             [
               { id: "profile", label: "Profile Info", icon: User },
@@ -311,7 +311,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 border-b-2 pb-3 text-xs leading-none font-bold transition-all ${
+                className={`relative flex shrink-0 items-center gap-2 border-b-2 pb-3 text-xs leading-none font-bold transition-all ${
                   active
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
@@ -325,7 +325,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
         </div>
 
         {/* Content Body */}
-        <div className="thin-scrollbar max-h-[380px] overflow-y-auto px-6 py-5">
+        <div className="thin-scrollbar min-h-0 overflow-y-auto px-6 py-5 max-sm:max-h-none max-sm:px-4 max-sm:py-4">
           {/* PROFILE TAB */}
           {activeTab === "profile" && (
             <form onSubmit={handleSave} className="space-y-4">
