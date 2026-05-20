@@ -2,6 +2,7 @@
 
 import { Download } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import {
@@ -10,6 +11,15 @@ import {
   AdminPageSkeleton,
 } from "@/components/admin/admin-ui"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { apiRequest } from "@/lib/api-client"
 
 type AdminTransaction = {
@@ -20,6 +30,12 @@ type AdminTransaction = {
   reference: string
   created_at: string
   profiles: { full_name: string; email: string } | null
+}
+
+type AdminUser = {
+  id: string
+  full_name: string
+  email: string
 }
 
 function formatCurrency(amount: number) {
@@ -37,17 +53,48 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
-async function fetchAdminTransactions() {
+async function fetchAdminUsers() {
+  const data = await apiRequest<{ users: AdminUser[] }>("/api/admin/users")
+  return data.users
+}
+
+async function fetchAdminTransactions(filters: {
+  userId: string
+  type: string
+  status: string
+  from: string
+  to: string
+}) {
+  const params = new URLSearchParams()
+  if (filters.userId !== "all") params.set("userId", filters.userId)
+  if (filters.type !== "all") params.set("type", filters.type)
+  if (filters.status !== "all") params.set("status", filters.status)
+  if (filters.from) params.set("from", filters.from)
+  if (filters.to) params.set("to", filters.to)
+  const query = params.toString()
   const data = await apiRequest<{ transactions: AdminTransaction[] }>(
-    "/api/admin/transactions"
+    `/api/admin/transactions${query ? `?${query}` : ""}`
   )
   return data.transactions
 }
 
 export default function AdminTransactionsPage() {
+  const [userId, setUserId] = useState("all")
+  const [type, setType] = useState("all")
+  const [status, setStatus] = useState("all")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
+  const filters = useMemo(
+    () => ({ userId, type, status, from, to }),
+    [from, status, to, type, userId]
+  )
+  const { data: users = [] } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: fetchAdminUsers,
+  })
   const { data: transactions } = useQuery({
-    queryKey: ["admin-transactions"],
-    queryFn: fetchAdminTransactions,
+    queryKey: ["admin-transactions", filters],
+    queryFn: () => fetchAdminTransactions(filters),
   })
 
   if (!transactions) return <AdminPageSkeleton variant="table" />
@@ -80,6 +127,67 @@ export default function AdminTransactionsPage() {
           Export CSV
         </Button>
       </div>
+      <Card className="fintech-surface rounded-[1.35rem]">
+        <CardContent className="grid gap-3 p-4 md:grid-cols-5">
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger className="h-11 w-full rounded-xl bg-card/75">
+              <SelectValue placeholder="User" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="all">All users</SelectItem>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  {user.full_name || user.email}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger className="h-11 w-full rounded-xl bg-card/75">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="deposit">Deposits</SelectItem>
+              <SelectItem value="withdrawal">Withdrawals</SelectItem>
+              <SelectItem value="contribution">Contributions</SelectItem>
+              <SelectItem value="lock">Locks</SelectItem>
+              <SelectItem value="unlock">Unlocks</SelectItem>
+              <SelectItem value="adjustment">Adjustments</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="h-11 w-full rounded-xl bg-card/75">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="successful">Successful</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Input
+            type="date"
+            value={from}
+            onChange={(event) => setFrom(event.target.value)}
+            className="h-11 rounded-xl"
+            aria-label="From date"
+          />
+          <Input
+            type="date"
+            value={to}
+            onChange={(event) => setTo(event.target.value)}
+            className="h-11 rounded-xl"
+            aria-label="To date"
+          />
+        </CardContent>
+      </Card>
       <AdminDataTable
         title="Transactions"
         columns={["User", "Type", "Amount", "Status", "Reference ID", "Date"]}

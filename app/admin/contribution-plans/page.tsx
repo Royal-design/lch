@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Ban, Loader2, LockKeyhole, RotateCcw } from "lucide-react"
+import { Ban, CheckCircle2, Loader2, LockKeyhole, RotateCcw } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -43,6 +43,7 @@ export default function AdminContributionPlansPage() {
   const queryClient = useQueryClient()
   const [pendingAction, setPendingAction] = useState<{
     id: string
+    action: "lock" | "disable"
     status: string
   } | null>(null)
   const { data: plans } = useQuery({
@@ -98,10 +99,9 @@ export default function AdminContributionPlansPage() {
               plan.profiles?.full_name || plan.profiles?.email || "Unknown user"
             const nextStatus = plan.status === "paused" ? "active" : "paused"
             const isLockActionPending =
-              pendingAction?.id === plan.id &&
-              ["active", "paused"].includes(pendingAction.status)
+              pendingAction?.id === plan.id && pendingAction.action === "lock"
             const isDisableActionPending =
-              pendingAction?.id === plan.id && pendingAction.status === "cancelled"
+              pendingAction?.id === plan.id && pendingAction.action === "disable"
             const planIsClosed = ["cancelled", "completed"].includes(plan.status)
 
             return (
@@ -139,9 +139,16 @@ export default function AdminContributionPlansPage() {
                         variant="outline"
                         size="sm"
                         className="rounded-xl"
-                        disabled={isLockActionPending || planIsClosed}
+                        disabled={
+                          isLockActionPending ||
+                          planIsClosed
+                        }
                         onClick={() => {
-                          setPendingAction({ id: plan.id, status: nextStatus })
+                          setPendingAction({
+                            id: plan.id,
+                            action: "lock",
+                            status: nextStatus,
+                          })
                           statusMutation.mutate({
                             id: plan.id,
                             status: nextStatus,
@@ -161,23 +168,29 @@ export default function AdminContributionPlansPage() {
                         variant="outline"
                         size="sm"
                         className="rounded-xl"
-                        disabled={
-                          isDisableActionPending || plan.status === "cancelled"
-                        }
+                        disabled={isDisableActionPending}
                         onClick={() => {
-                          setPendingAction({ id: plan.id, status: "cancelled" })
+                          const status =
+                            plan.status === "cancelled" ? "active" : "cancelled"
+                          setPendingAction({
+                            id: plan.id,
+                            action: "disable",
+                            status,
+                          })
                           statusMutation.mutate({
                             id: plan.id,
-                            status: "cancelled",
+                            status,
                           })
                         }}
                       >
                         {isDisableActionPending ? (
                           <Loader2 className="size-3.5 animate-spin" />
+                        ) : plan.status === "cancelled" ? (
+                          <CheckCircle2 className="size-3.5" />
                         ) : (
                           <Ban className="size-3.5" />
                         )}
-                        Disable
+                        {plan.status === "cancelled" ? "Enable" : "Disable"}
                       </Button>
                     </div>
                   </div>

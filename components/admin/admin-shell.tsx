@@ -8,8 +8,8 @@ import {
   ChartNoAxesCombined,
   Users,
   CreditCard,
+  HandCoins,
   Wallet,
-  ListChecks,
 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
@@ -32,8 +32,8 @@ const mobileAdminItems = [
   { href: "/admin", label: "Overview", shortLabel: "Home", icon: ChartNoAxesCombined },
   { href: "/admin/users", label: "Users", shortLabel: "Users", icon: Users },
   { href: "/admin/transactions", label: "Transactions", shortLabel: "Ledger", icon: CreditCard },
+  { href: "/admin/contributions", label: "Contributions", shortLabel: "Contrib", icon: HandCoins },
   { href: "/admin/withdrawals", label: "Withdrawals", shortLabel: "Payouts", icon: Wallet },
-  { href: "/admin/ajo-types", label: "Ajo Types", shortLabel: "Ajo", icon: ListChecks },
 ]
 
 function isActive(pathname: string, href: string) {

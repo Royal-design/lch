@@ -1,8 +1,8 @@
 import { requireAdmin } from "@/lib/auth-server"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const context = await requireAdmin()
 
   if (context.error) {
@@ -18,7 +18,14 @@ export async function GET() {
     )
   }
 
-  const { data, error } = await supabase
+  const { searchParams } = new URL(request.url)
+  const userId = searchParams.get("userId")
+  const type = searchParams.get("type")
+  const status = searchParams.get("status")
+  const from = searchParams.get("from")
+  const to = searchParams.get("to")
+
+  let query = supabase
     .from("transactions")
     .select(
       `
@@ -35,6 +42,18 @@ export async function GET() {
     )
     .order("created_at", { ascending: false })
     .limit(100)
+
+  if (userId && userId !== "all") query = query.eq("user_id", userId)
+  if (type && type !== "all") query = query.eq("type", type)
+  if (status && status !== "all") query = query.eq("status", status)
+  if (from) query = query.gte("created_at", new Date(from).toISOString())
+  if (to) {
+    const endDate = new Date(to)
+    endDate.setHours(23, 59, 59, 999)
+    query = query.lte("created_at", endDate.toISOString())
+  }
+
+  const { data, error } = await query
 
   if (error) {
     return NextResponse.json(

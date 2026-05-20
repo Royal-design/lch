@@ -220,7 +220,7 @@ export default function AdminUsersPage() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-10 rounded-xl">
+              <SelectTrigger className="h-10 w-full rounded-xl">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -230,7 +230,7 @@ export default function AdminUsersPage() {
               </SelectContent>
             </Select>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="h-10 rounded-xl">
+              <SelectTrigger className="h-10 w-full rounded-xl">
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
               <SelectContent>

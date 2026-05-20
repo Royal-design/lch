@@ -3,6 +3,7 @@ import {
   Bell,
   ChartNoAxesCombined,
   CircleDollarSign,
+  HandCoins,
   CreditCard,
   Landmark,
   ListChecks,
@@ -21,6 +22,7 @@ export const adminNavItems = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/roles", label: "Roles", icon: Shield },
   { href: "/admin/transactions", label: "Transactions", icon: CreditCard },
+  { href: "/admin/contributions", label: "Contributions", icon: HandCoins },
   { href: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
   {
     href: "/admin/contribution-plans",
