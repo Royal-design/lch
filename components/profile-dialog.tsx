@@ -38,7 +38,10 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
   const [activeTab, setActiveTab] = useState<
     "profile" | "security" | "notifications"
   >("profile")
-  const [loading, setLoading] = useState(false)
+  const [loadingProfile, setLoadingProfile] = useState(false)
+  const [savingAction, setSavingAction] = useState<
+    "profile" | "security" | "notifications" | null
+  >(null)
   const [isOpen, setIsOpen] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
@@ -67,7 +70,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
     const activeUser = user
 
     async function loadProfile() {
-      setLoading(true)
+      setLoadingProfile(true)
       try {
         const data = await apiRequest<{
           profile: {
@@ -104,7 +107,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
           )
         }
       } finally {
-        if (!ignore) setLoading(false)
+        if (!ignore) setLoadingProfile(false)
       }
     }
 
@@ -160,7 +163,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setSavingAction("profile")
 
     try {
       const data = await apiRequest<{ profile: CurrentProfile }>(
@@ -184,7 +187,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
         error instanceof Error ? error.message : "Unable to update profile"
       )
     } finally {
-      setLoading(false)
+      setSavingAction(null)
     }
   }
 
@@ -203,9 +206,9 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
       return
     }
 
-    setLoading(true)
+    setSavingAction("security")
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    setLoading(false)
+    setSavingAction(null)
     toast.success("Password changed successfully!")
     setCurrentPassword("")
     setNewPassword("")
@@ -215,9 +218,9 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
 
   const handleNotificationsSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setSavingAction("notifications")
     await new Promise((resolve) => setTimeout(resolve, 800))
-    setLoading(false)
+    setSavingAction(null)
     toast.success("Notification preferences updated!")
     setIsOpen(false)
   }
@@ -284,6 +287,11 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
                 {fullName || "User Profile"}
               </h4>
               <p className="mt-1 text-xs text-muted-foreground">{email}</p>
+              {loadingProfile ? (
+                <p className="mt-1 text-[0.68rem] font-semibold text-primary">
+                  Loading profile...
+                </p>
+              ) : null}
             </div>
           </div>
         </div>
@@ -388,10 +396,10 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
               <DialogFooter className="px-0 pt-4">
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={savingAction !== null || loadingProfile}
                   className="h-10 w-full rounded-xl px-5 text-xs font-bold sm:w-auto"
                 >
-                  {loading ? (
+                  {savingAction === "profile" ? (
                     <>
                       <Loader2 className="mr-2 size-3.5 animate-spin" />
                       Saving...
@@ -476,10 +484,10 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
               <DialogFooter className="px-0 pt-4">
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={savingAction !== null || loadingProfile}
                   className="h-10 w-full rounded-xl px-5 text-xs font-bold sm:w-auto"
                 >
-                  {loading ? (
+                  {savingAction === "security" ? (
                     <>
                       <Loader2 className="mr-2 size-3.5 animate-spin" />
                       Updating...
@@ -562,10 +570,10 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
               <DialogFooter className="px-0 pt-4">
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={savingAction !== null || loadingProfile}
                   className="h-10 w-full rounded-xl px-5 text-xs font-bold sm:w-auto"
                 >
-                  {loading ? (
+                  {savingAction === "notifications" ? (
                     <>
                       <Loader2 className="mr-2 size-3.5 animate-spin" />
                       Saving...

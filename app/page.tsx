@@ -6,6 +6,7 @@ import {
   LockKeyhole,
   ShieldCheck,
 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
@@ -41,9 +42,12 @@ export default function Home() {
           <Card className="fintech-surface overflow-hidden rounded-[2rem] border border-border/60 p-0 shadow-[0_32px_80px_rgba(15,23,42,0.12)]">
             <CardContent className="p-0">
               <div className="relative aspect-[4/3.3] w-full overflow-hidden">
-                <img
+                <Image
                   src="/fintech_hero.png"
                   alt="LCH Premium Fintech Dashboard"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 54vw, 100vw"
                   className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/10 to-transparent" />

@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CalendarClock, ListChecks, Users } from "lucide-react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 import { SkeletonBlock } from "@/components/admin/admin-ui"
@@ -40,6 +41,7 @@ async function joinAjoType(ajoTypeId: string) {
 
 export function AjoTypeMarketplace() {
   const queryClient = useQueryClient()
+  const [joiningAjoId, setJoiningAjoId] = useState<string | null>(null)
   const { data: ajoTypes = [], isLoading, isError } = useQuery({
     queryKey: ["ajo-types"],
     queryFn: fetchAjoTypes,
@@ -54,6 +56,9 @@ export function AjoTypeMarketplace() {
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Unable to join Ajo")
+    },
+    onSettled: () => {
+      setJoiningAjoId(null)
     },
   })
 
@@ -98,11 +103,14 @@ export function AjoTypeMarketplace() {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      {ajoTypes.map((ajoType) => (
-        <Card
-          key={ajoType.id}
-          className="fintech-surface fintech-card-hover rounded-[1.35rem]"
-        >
+      {ajoTypes.map((ajoType) => {
+        const isJoiningThis = joiningAjoId === ajoType.id
+
+        return (
+          <Card
+            key={ajoType.id}
+            className="fintech-surface fintech-card-hover rounded-[1.35rem]"
+          >
           <CardHeader>
             <CardTitle className="flex items-start justify-between gap-3">
               <span>{ajoType.plan_name}</span>
@@ -142,14 +150,18 @@ export function AjoTypeMarketplace() {
             </div>
             <Button
               className="h-10 w-full rounded-xl"
-              disabled={joinMutation.isPending}
-              onClick={() => joinMutation.mutate(ajoType.id)}
+              disabled={joiningAjoId !== null}
+              onClick={() => {
+                setJoiningAjoId(ajoType.id)
+                joinMutation.mutate(ajoType.id)
+              }}
             >
-              {joinMutation.isPending ? "Joining..." : "Join Ajo"}
+              {isJoiningThis ? "Joining..." : "Join Ajo"}
             </Button>
           </CardContent>
         </Card>
-      ))}
+        )
+      })}
     </div>
   )
 }

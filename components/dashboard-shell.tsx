@@ -232,7 +232,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-20 border-b border-border/60 bg-background/78 backdrop-blur-2xl">
           <div className="flex h-[4.25rem] items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="lg:hidden">
-              <LchLogo compact />
+              <ProfileDialog>
+                <Avatar className="size-10 cursor-pointer border border-border shadow-sm shadow-slate-950/5 transition-transform hover:scale-105">
+                  {avatarUrl ? (
+                    <AvatarImage src={avatarUrl} alt={displayName} />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </ProfileDialog>
             </div>
             <div className="hidden lg:block">
               <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
@@ -248,14 +257,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Bell className="size-4" />
                 <span className="sr-only">Notifications</span>
               </Button>
-              <ProfileDialog>
-                <Avatar className="size-10 border border-border shadow-sm shadow-slate-950/5 cursor-pointer transition-transform hover:scale-105">
-                  {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
-                  <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-              </ProfileDialog>
+              <div className="hidden lg:block">
+                <ProfileDialog>
+                  <Avatar className="size-10 cursor-pointer border border-border shadow-sm shadow-slate-950/5 transition-transform hover:scale-105">
+                    {avatarUrl ? (
+                      <AvatarImage src={avatarUrl} alt={displayName} />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </ProfileDialog>
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
