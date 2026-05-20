@@ -12,6 +12,7 @@ import {
   Wallet,
 } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
+import { motion } from "framer-motion"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
@@ -31,7 +32,7 @@ import { AdminHeaderSkeleton, SkeletonBlock } from "@/components/admin/admin-ui"
 const mobileAdminItems = [
   { href: "/admin", label: "Overview", shortLabel: "Home", icon: ChartNoAxesCombined },
   { href: "/admin/users", label: "Users", shortLabel: "Users", icon: Users },
-  { href: "/admin/transactions", label: "Transactions", shortLabel: "Ledger", icon: CreditCard },
+  { href: "/admin/transactions", label: "Transactions", shortLabel: "Ledger", icon: CreditCard, isCenter: true },
   { href: "/admin/contributions", label: "Contributions", shortLabel: "Contrib", icon: HandCoins },
   { href: "/admin/withdrawals", label: "Withdrawals", shortLabel: "Payouts", icon: Wallet },
 ]
@@ -39,33 +40,6 @@ const mobileAdminItems = [
 function isActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === href
   return pathname.startsWith(href)
-}
-
-function MobileTabIcon({
-  icon: Icon,
-  active,
-}: {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  active: boolean
-}) {
-  return (
-    <span
-      className={cn(
-        "relative grid size-10 place-items-center rounded-[1.1rem] transition-all duration-300",
-        active
-          ? "bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(12,36,54,0.22)] dark:shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
-          : "bg-muted/60 text-muted-foreground ring-1 ring-border/80 group-hover:bg-accent group-hover:text-accent-foreground"
-      )}
-    >
-      <span
-        className={cn(
-          "absolute inset-x-2 top-1 h-px rounded-full transition-opacity",
-          active ? "bg-white/45 opacity-100" : "opacity-0"
-        )}
-      />
-      <Icon className="size-[1.05rem]" strokeWidth={active ? 2.4 : 2} />
-    </span>
-  )
 }
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -251,29 +225,96 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-36 bg-background/55 [mask-image:linear-gradient(to_top,black_35%,transparent)] backdrop-blur-2xl lg:hidden dark:bg-background/45" />
-      <nav className="fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 rounded-[1.45rem] border border-white/75 bg-white/86 p-1.5 shadow-[0_22px_55px_rgba(15,23,42,0.16)] backdrop-blur-2xl lg:hidden dark:border-white/10 dark:bg-card/82 dark:shadow-[0_24px_60px_rgba(0,0,0,0.38)]">
-        <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
+      <nav className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-30 mx-auto w-[calc(100%-2rem)] max-w-lg select-none lg:hidden">
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <div className="absolute inset-x-4 top-2 bottom-0 z-[-1] rounded-[2rem] bg-black/10 blur-xl dark:bg-black/40" />
+          <svg
+            className="h-[4.75rem] w-full text-white/94 backdrop-blur-2xl dark:text-card/94"
+            viewBox="0 0 350 68"
+            preserveAspectRatio="none"
+            fill="currentColor"
+          >
+            <path d="M 0,20 C 0,8.95 8.95,0 20,0 L 132,0 C 141,0 145,4 148,10 C 154,19 163,25 175,25 C 187,25 196,19 202,10 C 205,4 209,0 218,0 L 330,0 C 341.05,0 350,8.95 350,20 L 350,68 L 0,68 Z" />
+          </svg>
+          <svg
+            className="pointer-events-none absolute inset-0 h-[4.75rem] w-full"
+            viewBox="0 0 350 68"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M 0,20 C 0,8.95 8.95,0 20,0 L 132,0 C 141,0 145,4 148,10 C 154,19 163,25 175,25 C 187,25 196,19 202,10 C 205,4 209,0 218,0 L 330,0 C 341.05,0 350,8.95 350,20"
+              fill="none"
+              stroke="currentColor"
+              className="text-black/[0.06] dark:text-white/[0.08]"
+              strokeWidth="1.2"
+            />
+          </svg>
+        </div>
+
+        <div className="relative z-10 grid h-[4.75rem] grid-cols-5 items-center px-2">
           {mobileAdminItems.map((item) => {
             const Icon = item.icon
             const active = isActive(pathname, item.href)
+
+            if (item.isCenter) {
+              return (
+                <div
+                  key={item.href}
+                  className="relative flex h-full flex-col items-center justify-end pb-1.5"
+                >
+                  <Link href={item.href} className="absolute -top-[1.65rem] z-20">
+                    <motion.div
+                      whileHover={{ scale: 1.08 }}
+                      whileTap={{ scale: 0.92 }}
+                      className={cn(
+                        "flex size-14 items-center justify-center rounded-full border-4 border-white bg-gradient-to-tr from-primary to-emerald-500 text-white shadow-[0_8px_20px_rgba(16,185,129,0.3)] transition-all dark:border-[#151b2c] dark:shadow-[0_10px_25px_rgba(0,0,0,0.5)]",
+                        active &&
+                          "ring-2 ring-primary/80 ring-offset-2 dark:ring-offset-[#0d121f]"
+                      )}
+                    >
+                      <Icon className="size-6" strokeWidth={2.4} />
+                    </motion.div>
+                  </Link>
+                  <span
+                    className={cn(
+                      "text-[0.62rem] font-bold tracking-wide transition-colors duration-200",
+                      active
+                        ? "text-primary dark:text-emerald-400"
+                        : "text-muted-foreground/80"
+                    )}
+                  >
+                    {item.shortLabel}
+                  </span>
+                </div>
+              )
+            }
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "group flex min-h-[4.65rem] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[1.1rem] text-[0.66rem] leading-none font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:outline-none",
-                  active && "text-foreground"
+                  "group relative flex h-full cursor-pointer flex-col items-center justify-center gap-1 text-[0.62rem] font-bold transition-all duration-300 focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:outline-none",
+                  active
+                    ? "text-primary dark:text-emerald-400"
+                    : "text-muted-foreground/80 hover:text-foreground"
                 )}
               >
-                <MobileTabIcon icon={Icon} active={active} />
-                <span className="max-w-full truncate">{item.shortLabel}</span>
-                <span
+                <motion.span
+                  animate={active ? { y: -2, scale: 1.06 } : { y: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   className={cn(
-                    "h-1 w-1 rounded-full bg-primary transition-opacity",
-                    active ? "opacity-100" : "opacity-0"
+                    "relative z-10 grid size-10 place-items-center rounded-full transition-all",
+                    active
+                      ? "bg-primary text-primary-foreground shadow-[0_10px_22px_rgba(16,185,129,0.24)] dark:bg-emerald-500 dark:text-white dark:shadow-[0_10px_24px_rgba(0,0,0,0.42)]"
+                      : "text-muted-foreground/80 group-hover:bg-accent group-hover:text-accent-foreground"
                   )}
-                />
+                >
+                  <Icon className="size-[1.15rem]" strokeWidth={active ? 2.4 : 2} />
+                </motion.span>
+                <span className="relative z-10 max-w-full truncate tracking-wide">
+                  {item.shortLabel}
+                </span>
               </Link>
             )
           })}

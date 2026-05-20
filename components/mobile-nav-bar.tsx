@@ -99,33 +99,21 @@ export function MobileNavBar() {
                 active ? "text-primary dark:text-emerald-400" : "text-muted-foreground/80 hover:text-foreground"
               )}
             >
-              {/* Active Tab Background Glow */}
-              {active && (
-                <motion.div
-                  layoutId="activeTabGlow"
-                  className="absolute inset-x-2 inset-y-3 rounded-2xl bg-primary/[0.05] dark:bg-emerald-500/[0.08] z-0"
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                />
-              )}
-
               {/* Icon Container with subtle animation */}
               <motion.div
-                animate={active ? { y: -2, scale: 1.1 } : { y: 0, scale: 1 }}
+                animate={active ? { y: -2, scale: 1.06 } : { y: 0, scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="relative z-10 flex size-9 items-center justify-center rounded-xl transition-all"
+                className={cn(
+                  "relative z-10 flex size-10 items-center justify-center rounded-full transition-all",
+                  active
+                    ? "bg-primary text-primary-foreground shadow-[0_10px_22px_rgba(16,185,129,0.24)] dark:bg-emerald-500 dark:text-white dark:shadow-[0_10px_24px_rgba(0,0,0,0.42)]"
+                    : "text-muted-foreground/80 group-hover:bg-accent group-hover:text-accent-foreground"
+                )}
               >
                 <Icon className="size-[1.15rem]" strokeWidth={active ? 2.4 : 2} />
               </motion.div>
 
               <span className="relative z-10 tracking-wide">{item.label}</span>
-              
-              {/* Active dot indicator */}
-              <span
-                className={cn(
-                  "h-1 w-1 rounded-full bg-primary dark:bg-emerald-400 transition-all duration-300",
-                  active ? "scale-100 opacity-100" : "scale-0 opacity-0"
-                )}
-              />
             </Link>
           )
         })}

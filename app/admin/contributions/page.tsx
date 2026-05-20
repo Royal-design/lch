@@ -176,20 +176,28 @@ export default function AdminContributionsPage() {
             </SelectContent>
           </Select>
 
-          <Input
-            type="date"
-            value={from}
-            onChange={(event) => setFrom(event.target.value)}
-            className="h-11 rounded-xl"
-            aria-label="From date"
-          />
-          <Input
-            type="date"
-            value={to}
-            onChange={(event) => setTo(event.target.value)}
-            className="h-11 rounded-xl"
-            aria-label="To date"
-          />
+          <label className="space-y-1">
+            <span className="block px-1 text-[0.68rem] font-bold tracking-wide text-muted-foreground uppercase">
+              From date
+            </span>
+            <Input
+              type="date"
+              value={from}
+              onChange={(event) => setFrom(event.target.value)}
+              className="h-11 rounded-xl"
+            />
+          </label>
+          <label className="space-y-1">
+            <span className="block px-1 text-[0.68rem] font-bold tracking-wide text-muted-foreground uppercase">
+              To date
+            </span>
+            <Input
+              type="date"
+              value={to}
+              onChange={(event) => setTo(event.target.value)}
+              className="h-11 rounded-xl"
+            />
+          </label>
         </CardContent>
       </Card>
 
