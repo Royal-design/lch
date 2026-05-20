@@ -1,18 +1,14 @@
-import { Plus, Trophy } from "lucide-react"
+import { Plus } from "lucide-react"
 
 import { AjoTypeMarketplace } from "@/components/ajo-type-marketplace"
+import { ContributionHistory } from "@/components/contribution-history"
+import { ContributionLeaderboard } from "@/components/contribution-leaderboard"
 import { ContributionPlanList } from "@/components/contribution-plan-list"
 import { AddContributionForm } from "@/components/forms/add-contribution-form"
 import { CreateContributionPlanForm } from "@/components/forms/create-contribution-plan-form"
 import { FormModal } from "@/components/forms/form-system"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-const leaderboard = [
-  ["Amina Yusuf", "NGN 120,000", "100%", "1"],
-  ["Tunde Bello", "NGN 95,000", "92%", "2"],
-  ["Leenah Admin", "NGN 82,500", "88%", "3"],
-]
+import { Card, CardContent } from "@/components/ui/card"
 
 export default function ContributionsPage() {
   return (
@@ -29,7 +25,7 @@ export default function ContributionsPage() {
         <div className="flex gap-2">
           <FormModal
             title="Create contribution plan"
-            description="Set up an Ajo or personal plan with owner-defined withdrawal rules."
+            description="Set up a personal savings plan. Group Ajo plans are joined from the marketplace."
             trigger={
               <Button className="h-10 rounded-xl sm:w-auto">
                 <Plus className="size-4" />
@@ -66,35 +62,8 @@ export default function ContributionsPage() {
         </section>
 
         <section className="space-y-5">
-          <Card className="fintech-surface rounded-[1.35rem]">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="size-4 text-primary" />
-                Ajo leaderboard
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {leaderboard.map(([name, amount, score, rank]) => (
-                <div
-                  key={name}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/70 p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="grid size-10 place-items-center rounded-2xl bg-accent text-sm font-bold text-primary">
-                      {rank}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold">{name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Contribution score {score}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-sm font-bold">{amount}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <ContributionLeaderboard />
+          <ContributionHistory />
 
           <Card className="fintech-surface rounded-[1.35rem]">
             <CardContent className="p-5">

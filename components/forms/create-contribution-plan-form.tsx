@@ -35,7 +35,7 @@ export function CreateContributionPlanForm({ framed = true }: { framed?: boolean
     mode: "onBlur",
     reValidateMode: "onBlur",
     defaultValues: {
-      planType: "ajo",
+      planType: "personal",
       planName: "",
       targetAmount: "",
       frequency: "monthly",
@@ -58,28 +58,6 @@ export function CreateContributionPlanForm({ framed = true }: { framed?: boolean
   const content = (
     <form onSubmit={form.handleSubmit(onSubmit)}>
       <FieldGroup>
-        <Controller
-          name="planType"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <FormFieldShell
-              label="Plan type"
-              error={fieldState.error?.message}
-              hint="Ajo plans can follow the owner's rules."
-            >
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="h-12 w-full rounded-xl bg-card/75 px-4">
-                  <SelectValue placeholder="Choose plan type" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="ajo">Ajo group</SelectItem>
-                  <SelectItem value="personal">Personal savings</SelectItem>
-                </SelectContent>
-              </Select>
-            </FormFieldShell>
-          )}
-        />
-
         <Controller
           name="planName"
           control={form.control}
@@ -218,7 +196,7 @@ export function CreateContributionPlanForm({ framed = true }: { framed?: boolean
   return (
     <FormCard
       title="Create plan"
-      description="Set a savings target with owner-defined Ajo rules."
+      description="Set a personal savings target. Join group Ajo plans from the marketplace."
       icon={<Landmark className="size-5" />}
     >
       {content}

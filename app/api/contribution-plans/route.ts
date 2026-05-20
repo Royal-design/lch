@@ -44,6 +44,14 @@ export async function POST(request: NextRequest) {
   }
 
   const values = validationResult.data
+
+  if (values.planType !== "personal") {
+    return NextResponse.json(
+      { error: "Join an admin-created Ajo from the Ajo marketplace." },
+      { status: 400 }
+    )
+  }
+
   const { data, error } = await context.supabase
     .from("contribution_plans")
     .insert({

@@ -83,6 +83,8 @@ export function AddContributionForm({ framed = true }: { framed?: boolean }) {
       `Contribution of NGN ${data.amount.toLocaleString("en-NG")} added.`
     )
     queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
+    queryClient.invalidateQueries({ queryKey: ["contributions"] })
+    queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
     form.reset()
   }
 

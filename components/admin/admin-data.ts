@@ -14,6 +14,8 @@ import {
   Wallet,
 } from "lucide-react"
 
+import { apiRequest } from "@/lib/api-client"
+
 export const adminNavItems = [
   { href: "/admin", label: "Overview", icon: ChartNoAxesCombined },
   { href: "/admin/users", label: "Users", icon: Users },
@@ -311,17 +313,82 @@ export const notifications = [
   ],
 ]
 
+type AdminOverviewResponse = {
+  kpis: {
+    totalUsers: number
+    totalContributed: number
+    totalWithdrawals: number
+    activePlans: number
+    lockedFunds: number
+    contributionRecords: number
+  }
+  flowData: typeof flowData
+  alerts: string[][]
+  users: string[][]
+  transactions: string[][]
+  withdrawals: string[][]
+  plans: string[][]
+  leaderboard: string[][]
+  notifications: string[][]
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(Number(amount) || 0)
+}
+
 export async function getAdminData() {
-  await new Promise((resolve) => setTimeout(resolve, 120))
+  const data = await apiRequest<AdminOverviewResponse>("/api/admin/overview")
+
   return {
-    kpis,
-    flowData,
-    alerts,
-    users,
-    transactions,
-    withdrawals,
-    plans,
-    leaderboard,
-    notifications,
+    kpis: [
+      {
+        icon: Users,
+        label: "Total Users",
+        value: data.kpis.totalUsers.toLocaleString("en-NG"),
+        trend: "Live",
+      },
+      {
+        icon: CircleDollarSign,
+        label: "Total Contributions",
+        value: formatCurrency(data.kpis.totalContributed),
+        trend: "Recorded",
+      },
+      {
+        icon: Wallet,
+        label: "Total Withdrawals",
+        value: formatCurrency(data.kpis.totalWithdrawals),
+        trend: "Recorded",
+      },
+      {
+        icon: Landmark,
+        label: "Active Plans",
+        value: data.kpis.activePlans.toLocaleString("en-NG"),
+        trend: "Live",
+      },
+      {
+        icon: ShieldAlert,
+        label: "Locked Funds",
+        value: formatCurrency(data.kpis.lockedFunds),
+        trend: "Current",
+      },
+      {
+        icon: CreditCard,
+        label: "Contribution Records",
+        value: data.kpis.contributionRecords.toLocaleString("en-NG"),
+        trend: "7 days",
+      },
+    ],
+    flowData: data.flowData,
+    alerts: data.alerts,
+    users: data.users,
+    transactions: data.transactions,
+    withdrawals: data.withdrawals,
+    plans: data.plans,
+    leaderboard: data.leaderboard,
+    notifications: data.notifications,
   }
 }

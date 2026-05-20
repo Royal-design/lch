@@ -34,11 +34,10 @@ interface ProfileDialogProps {
 
 export function ProfileDialog({ children }: ProfileDialogProps) {
   const queryClient = useQueryClient()
-  const { user, role } = useAuthStore()
+  const { user, profile, role, setProfile } = useAuthStore()
   const [activeTab, setActiveTab] = useState<
     "profile" | "security" | "notifications"
   >("profile")
-  const [loadingProfile, setLoadingProfile] = useState(false)
   const [savingAction, setSavingAction] = useState<
     "profile" | "security" | "notifications" | null
   >(null)
@@ -68,17 +67,37 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
 
     let ignore = false
     const activeUser = user
+    const cachedProfile =
+      profile ?? queryClient.getQueryData<CurrentProfile>(["profile"])
+
+    if (cachedProfile) {
+      setFullName(cachedProfile.full_name || "")
+      setEmail(cachedProfile.email || activeUser.email || "")
+      setPhone(cachedProfile.phone || "")
+      setAvatarUrl(cachedProfile.avatar_url || "")
+    } else {
+      setFullName(
+        typeof activeUser.user_metadata?.full_name === "string"
+          ? activeUser.user_metadata.full_name
+          : ""
+      )
+      setEmail(activeUser.email || "")
+      setPhone(
+        typeof activeUser.user_metadata?.phone === "string"
+          ? activeUser.user_metadata.phone
+          : ""
+      )
+      setAvatarUrl(
+        typeof activeUser.user_metadata?.avatar_url === "string"
+          ? activeUser.user_metadata.avatar_url
+          : ""
+      )
+    }
 
     async function loadProfile() {
-      setLoadingProfile(true)
       try {
         const data = await apiRequest<{
-          profile: {
-            full_name: string
-            email: string
-            phone: string | null
-            avatar_url: string | null
-          }
+          profile: CurrentProfile
         }>("/api/profile")
 
         if (!ignore) {
@@ -86,37 +105,21 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
           setEmail(data.profile.email || activeUser.email || "")
           setPhone(data.profile.phone || "")
           setAvatarUrl(data.profile.avatar_url || "")
+          setProfile(data.profile)
+          queryClient.setQueryData(["profile"], data.profile)
         }
       } catch {
-        if (!ignore) {
-          setFullName(
-            typeof activeUser.user_metadata?.full_name === "string"
-              ? activeUser.user_metadata.full_name
-              : ""
-          )
-          setEmail(activeUser.email || "")
-          setPhone(
-            typeof activeUser.user_metadata?.phone === "string"
-              ? activeUser.user_metadata.phone
-              : ""
-          )
-          setAvatarUrl(
-            typeof activeUser.user_metadata?.avatar_url === "string"
-              ? activeUser.user_metadata.avatar_url
-              : ""
-          )
-        }
-      } finally {
-        if (!ignore) setLoadingProfile(false)
+        // Cached auth/profile data is already displayed. Avoid showing a noisy
+        // loading state when the background refresh cannot complete.
       }
     }
 
-    loadProfile()
+    if (!cachedProfile) loadProfile()
 
     return () => {
       ignore = true
     }
-  }, [user, isOpen])
+  }, [profile, queryClient, setProfile, user, isOpen])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -148,6 +151,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
 
       setAvatarUrl(data.avatarUrl)
       setAvatarFile(null)
+      setProfile(data.profile)
       queryClient.setQueryData(["profile"], data.profile)
       toast.success("Avatar uploaded successfully.")
     } catch (error) {
@@ -179,6 +183,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
       )
       setAvatarUrl(data.profile.avatar_url || "")
       setAvatarFile(null)
+      setProfile(data.profile)
       queryClient.setQueryData(["profile"], data.profile)
       toast.success("Profile updated successfully.")
       setIsOpen(false)
@@ -287,11 +292,6 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
                 {fullName || "User Profile"}
               </h4>
               <p className="mt-1 text-xs text-muted-foreground">{email}</p>
-              {loadingProfile ? (
-                <p className="mt-1 text-[0.68rem] font-semibold text-primary">
-                  Loading profile...
-                </p>
-              ) : null}
             </div>
           </div>
         </div>
@@ -396,7 +396,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
               <DialogFooter className="px-0 pt-4">
                 <Button
                   type="submit"
-                  disabled={savingAction !== null || loadingProfile}
+                  disabled={savingAction !== null}
                   className="h-10 w-full rounded-xl px-5 text-xs font-bold sm:w-auto"
                 >
                   {savingAction === "profile" ? (
@@ -484,7 +484,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
               <DialogFooter className="px-0 pt-4">
                 <Button
                   type="submit"
-                  disabled={savingAction !== null || loadingProfile}
+                  disabled={savingAction !== null}
                   className="h-10 w-full rounded-xl px-5 text-xs font-bold sm:w-auto"
                 >
                   {savingAction === "security" ? (
@@ -570,7 +570,7 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
               <DialogFooter className="px-0 pt-4">
                 <Button
                   type="submit"
-                  disabled={savingAction !== null || loadingProfile}
+                  disabled={savingAction !== null}
                   className="h-10 w-full rounded-xl px-5 text-xs font-bold sm:w-auto"
                 >
                   {savingAction === "notifications" ? (
