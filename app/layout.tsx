@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 
 import AuthProvider from "@/components/AuthProvider"
 import { QueryProvider } from "@/components/query-provider"
+import { RealtimeNotifications } from "@/components/realtime-notifications"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
@@ -112,6 +113,7 @@ export default function RootLayout({
         <ThemeProvider>
           <QueryProvider>
             <AuthProvider>
+              <RealtimeNotifications />
               <main>{children}</main>
             </AuthProvider>
           </QueryProvider>

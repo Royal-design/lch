@@ -1,4 +1,5 @@
 import { getRequestOrigin, sanitizeNextPath } from "@/lib/auth-redirects"
+import { createSystemNotification } from "@/lib/notifications"
 import { createClient } from "@/lib/supabase/server"
 import type { EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
@@ -15,6 +16,10 @@ export async function GET(request: Request) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      if (type === "signup") {
+        await notifySignupConfirmed(supabase)
+      }
+
       return NextResponse.redirect(
         `${origin}${await resolveRedirect(supabase, next)}`
       )
@@ -35,6 +40,22 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.redirect(`${origin}/login?error=auth-code-exchange-failed`)
+}
+
+async function notifySignupConfirmed(
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  await createSystemNotification({
+    userId: user.id,
+    title: "Signup confirmed",
+    message: "Your LCH signup has been confirmed. Welcome in.",
+  })
 }
 
 async function resolveRedirect(

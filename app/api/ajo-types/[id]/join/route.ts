@@ -1,4 +1,5 @@
 import { requireActiveUser } from "@/lib/auth-server"
+import { createSystemNotification } from "@/lib/notifications"
 import { NextRequest, NextResponse } from "next/server"
 
 type RouteContext = {
@@ -80,6 +81,12 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       { status: 500 }
     )
   }
+
+  await createSystemNotification({
+    userId: auth.user.id,
+    title: "Joined Ajo",
+    message: `You joined ${ajoType.plan_name}. Contributions can now be recorded for this plan.`,
+  })
 
   return NextResponse.json({ plan: data }, { status: 201 })
 }

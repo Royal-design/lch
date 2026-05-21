@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/auth-server"
+import { createSystemNotification } from "@/lib/notifications"
 import { readRequestBody } from "@/lib/request-body"
 import { userRoleUpdateSchema, userStatusUpdateSchema } from "@/schemas/auth"
 import { NextRequest, NextResponse } from "next/server"
@@ -61,6 +62,33 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       { error: "Unable to update user" },
       { status: 500 }
     )
+  }
+
+  if (action === "role") {
+    await createSystemNotification({
+      userId: data.id,
+      title: "Role changed",
+      message: `Your account role was changed to ${data.role}.`,
+      email: {
+        to: data.email,
+        subject: "Your LCH account role changed",
+      },
+    })
+  } else {
+    const statusLabel = data.status === "suspended" ? "suspended" : "activated"
+
+    await createSystemNotification({
+      userId: data.id,
+      title: data.status === "suspended" ? "Account suspended" : "Account activated",
+      message:
+        data.status === "suspended"
+          ? "Your LCH account has been suspended. Contact support if you think this was a mistake."
+          : "Your LCH account has been activated again.",
+      email: {
+        to: data.email,
+        subject: `Your LCH account was ${statusLabel}`,
+      },
+    })
   }
 
   return NextResponse.json({ user: data })
