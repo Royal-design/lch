@@ -5,16 +5,54 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { getAdminData } from "@/components/admin/admin-data"
-import { AdminDataTable, AdminPageHeader } from "@/components/admin/admin-ui"
+import {
+  AdminDataTable,
+  AdminPageHeader,
+  AdminTableSkeleton,
+} from "@/components/admin/admin-ui"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { apiRequest } from "@/lib/api-client"
 
+type AdminNotification = {
+  id: string
+  title: string
+  message: string
+  read: boolean
+  created_at: string
+}
+
+type AdminNotificationsResponse = {
+  notifications: AdminNotification[]
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-NG", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value))
+}
+
+async function fetchAdminNotifications(page: number) {
+  return apiRequest<AdminNotificationsResponse>(
+    `/api/admin/notifications?page=${page}&pageSize=10`
+  )
+}
+
 export default function AdminNotificationsPage() {
   const queryClient = useQueryClient()
-  const { data } = useQuery({ queryKey: ["admin-notifications"], queryFn: getAdminData })
+  const [page, setPage] = useState(1)
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-notifications", page],
+    queryFn: () => fetchAdminNotifications(page),
+  })
   const [message, setMessage] = useState("")
   const [sendEmail, setSendEmail] = useState(true)
   const broadcastMutation = useMutation({
@@ -35,6 +73,7 @@ export default function AdminNotificationsPage() {
         `Broadcast sent to ${response.notified.toLocaleString("en-NG")} users.`
       )
       setMessage("")
+      setPage(1)
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] })
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] })
     },
@@ -45,9 +84,16 @@ export default function AdminNotificationsPage() {
     },
   })
 
-  if (!data) return null
+  if (isLoading || !data) return <AdminTableSkeleton rows={8} columns={4} />
 
   const canSend = message.trim().length >= 3 && !broadcastMutation.isPending
+  const rows = data.notifications.map((notification) => [
+    notification.title,
+    notification.message,
+    notification.read ? "Delivered" : "Unread",
+    formatDate(notification.created_at),
+  ])
+  const { pagination } = data
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -94,8 +140,42 @@ export default function AdminNotificationsPage() {
       <AdminDataTable
         title="Message history"
         columns={["Type", "Message", "Delivery Status", "Date"]}
-        rows={data.notifications}
+        rows={rows}
         statusIndex={2}
+        footer={
+          <div className="flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs font-medium text-muted-foreground">
+              Page {pagination.page} of {pagination.totalPages} -{" "}
+              {pagination.total.toLocaleString("en-NG")} notifications
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-xl"
+                disabled={pagination.page <= 1}
+                onClick={() => setPage((current) => Math.max(current - 1, 1))}
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-xl"
+                disabled={pagination.page >= pagination.totalPages}
+                onClick={() =>
+                  setPage((current) =>
+                    Math.min(current + 1, pagination.totalPages)
+                  )
+                }
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        }
       />
     </div>
   )

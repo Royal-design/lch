@@ -5,11 +5,67 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
+const DEFAULT_PAGE_SIZE = 10
+const MAX_PAGE_SIZE = 50
+
 const broadcastSchema = z.object({
   title: z.string().trim().min(3).max(80),
   message: z.string().trim().min(3).max(500),
   email: z.boolean().default(true),
 })
+
+function getPagination(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const page = Math.max(Number(searchParams.get("page")) || 1, 1)
+  const pageSize = Math.min(
+    Math.max(Number(searchParams.get("pageSize")) || DEFAULT_PAGE_SIZE, 1),
+    MAX_PAGE_SIZE
+  )
+  const from = (page - 1) * pageSize
+
+  return { page, pageSize, from, to: from + pageSize - 1 }
+}
+
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin()
+
+  if (auth.error) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status })
+  }
+
+  const supabase = createAdminClient()
+
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Admin service client is not configured" },
+      { status: 500 }
+    )
+  }
+
+  const pagination = getPagination(request)
+  const { data, error, count } = await supabase
+    .from("notifications")
+    .select("id, title, message, read, created_at", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(pagination.from, pagination.to)
+
+  if (error) {
+    return NextResponse.json(
+      { error: "Unable to load admin notifications" },
+      { status: 500 }
+    )
+  }
+
+  return NextResponse.json({
+    notifications: data || [],
+    pagination: {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      total: count || 0,
+      totalPages: Math.max(Math.ceil((count || 0) / pagination.pageSize), 1),
+    },
+  })
+}
 
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin()
