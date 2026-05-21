@@ -28,6 +28,10 @@ import {
   type ContributionPlanValues,
 } from "@/schemas/auth"
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
+}
+
 export function CreateContributionPlanForm({
   framed = true,
   onSuccess,
@@ -61,8 +65,8 @@ export function CreateContributionPlanForm({
       queryClient.invalidateQueries({ queryKey: ["contribution-plans"] })
       form.reset()
       onSuccess?.()
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to create plan. Please try again.")
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to create plan. Please try again."))
     }
   }
 

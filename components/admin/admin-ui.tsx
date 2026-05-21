@@ -219,6 +219,7 @@ export function AdminDataTable({
   statusIndex,
   searchable = true,
   filterLabel = "Status",
+  footer,
 }: {
   title: string
   columns: string[]
@@ -226,6 +227,7 @@ export function AdminDataTable({
   statusIndex?: number
   searchable?: boolean
   filterLabel?: string
+  footer?: React.ReactNode
 }) {
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState("all")
@@ -307,6 +309,7 @@ export function AdminDataTable({
             No records match the current filters.
           </div>
         ) : null}
+        {footer ? <div className="mt-4">{footer}</div> : null}
       </CardContent>
     </Card>
   )

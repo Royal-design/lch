@@ -16,7 +16,6 @@ import { useQueryClient } from "@tanstack/react-query"
 import {
   Bell,
   Camera,
-  CheckCircle2,
   Loader2,
   Lock,
   Mail,
@@ -377,19 +376,6 @@ export function ProfileDialog({ children }: ProfileDialogProps) {
                       className="h-10 rounded-xl pl-10"
                     />
                   </div>
-                </div>
-              </div>
-
-              <div className="mt-2 flex items-start gap-3 rounded-xl border border-border bg-muted/20 p-3">
-                <CheckCircle2 className="mt-0.5 size-4 text-primary" />
-                <div>
-                  <p className="text-[0.72rem] font-bold text-foreground">
-                    Cloudinary Avatar Connected
-                  </p>
-                  <p className="mt-0.5 text-[0.68rem] leading-normal text-muted-foreground">
-                    Profile photos upload to Cloudinary and the image URL is
-                    saved with your profile.
-                  </p>
                 </div>
               </div>
 

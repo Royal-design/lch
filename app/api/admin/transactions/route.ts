@@ -2,6 +2,21 @@ import { requireAdmin } from "@/lib/auth-server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { NextRequest, NextResponse } from "next/server"
 
+const DEFAULT_PAGE_SIZE = 25
+const MAX_PAGE_SIZE = 100
+
+function getPagination(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const page = Math.max(Number(searchParams.get("page")) || 1, 1)
+  const pageSize = Math.min(
+    Math.max(Number(searchParams.get("pageSize")) || DEFAULT_PAGE_SIZE, 1),
+    MAX_PAGE_SIZE
+  )
+  const from = (page - 1) * pageSize
+
+  return { page, pageSize, from, to: from + pageSize - 1 }
+}
+
 export async function GET(request: NextRequest) {
   const context = await requireAdmin()
 
@@ -24,6 +39,7 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status")
   const from = searchParams.get("from")
   const to = searchParams.get("to")
+  const pagination = getPagination(request)
 
   let query = supabase
     .from("transactions")
@@ -38,10 +54,11 @@ export async function GET(request: NextRequest) {
       description,
       created_at,
       profiles (full_name, email)
-    `
+    `,
+      { count: "exact" }
     )
     .order("created_at", { ascending: false })
-    .limit(100)
+    .range(pagination.from, pagination.to)
 
   if (userId && userId !== "all") query = query.eq("user_id", userId)
   if (type && type !== "all") query = query.eq("type", type)
@@ -53,7 +70,7 @@ export async function GET(request: NextRequest) {
     query = query.lte("created_at", endDate.toISOString())
   }
 
-  const { data, error } = await query
+  const { data, error, count } = await query
 
   if (error) {
     console.error("Admin transactions query failed", error)
@@ -64,5 +81,13 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  return NextResponse.json({ transactions: data || [] })
+  return NextResponse.json({
+    transactions: data || [],
+    pagination: {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      total: count || 0,
+      totalPages: Math.max(Math.ceil((count || 0) / pagination.pageSize), 1),
+    },
+  })
 }

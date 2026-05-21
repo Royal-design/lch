@@ -44,6 +44,10 @@ function formatCurrency(amount: number) {
   }).format(Number(amount) || 0)
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
+}
+
 async function fetchContributionPlans() {
   const data = await apiRequest<{ plans: ContributionPlan[] }>(
     "/api/contribution-plans"
@@ -94,8 +98,10 @@ export function AddContributionForm({
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
       form.reset()
       onSuccess?.()
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to add contribution. Please try again.")
+    } catch (error: unknown) {
+      toast.error(
+        getErrorMessage(error, "Failed to add contribution. Please try again.")
+      )
     }
   }
 

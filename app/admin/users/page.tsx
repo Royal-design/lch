@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Search, Shield, UserCheck, UserX } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { AdminPageHeader, AdminPageSkeleton } from "@/components/admin/admin-ui"
@@ -56,6 +56,8 @@ interface ProfileWithWallet extends Profile {
   wallets: { balance: number; locked_balance: number }[] | null
 }
 
+const USERS_PAGE_SIZE = 20
+
 async function fetchUsers(): Promise<ProfileWithWallet[]> {
   const data = await apiRequest<{ users: ProfileWithWallet[] }>("/api/admin/users")
   return data.users
@@ -108,6 +110,7 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [roleFilter, setRoleFilter] = useState("all")
+  const [page, setPage] = useState(1)
   const [selectedUser, setSelectedUser] = useState<ProfileWithWallet | null>(
     null
   )
@@ -157,18 +160,31 @@ export default function AdminUsersPage() {
     },
   })
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (user.phone && user.phone.includes(searchQuery))
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((user) => {
+        const matchesSearch =
+          user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (user.phone && user.phone.includes(searchQuery))
 
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter
+        const matchesStatus =
+          statusFilter === "all" || user.status === statusFilter
 
-    const matchesRole = roleFilter === "all" || user.role === roleFilter
+        const matchesRole = roleFilter === "all" || user.role === roleFilter
 
-    return matchesSearch && matchesStatus && matchesRole
-  })
+        return matchesSearch && matchesStatus && matchesRole
+      }),
+    [roleFilter, searchQuery, statusFilter, users]
+  )
+  const totalPages = Math.max(
+    Math.ceil(filteredUsers.length / USERS_PAGE_SIZE),
+    1
+  )
+  const paginatedUsers = filteredUsers.slice(
+    (page - 1) * USERS_PAGE_SIZE,
+    page * USERS_PAGE_SIZE
+  )
 
   const handleStatusAction = (user: ProfileWithWallet) => {
     setSelectedUser(user)
@@ -214,12 +230,21 @@ export default function AdminUsersPage() {
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setPage(1)
+                }}
                 placeholder="Search by name, email, or phone"
                 className="h-10 rounded-xl pl-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value)
+                setPage(1)
+              }}
+            >
               <SelectTrigger className="h-10 w-full rounded-xl">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -229,7 +254,13 @@ export default function AdminUsersPage() {
                 <SelectItem value="suspended">Suspended</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <Select
+              value={roleFilter}
+              onValueChange={(value) => {
+                setRoleFilter(value)
+                setPage(1)
+              }}
+            >
               <SelectTrigger className="h-10 w-full rounded-xl">
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -261,7 +292,7 @@ export default function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
+                {paginatedUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-semibold">
                       {user.full_name || "N/A"}
@@ -349,6 +380,38 @@ export default function AdminUsersPage() {
               </TableBody>
             </Table>
           </div>
+          {filteredUsers.length > USERS_PAGE_SIZE ? (
+            <div className="mt-4 flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs font-medium text-muted-foreground">
+                Page {page} of {totalPages} -{" "}
+                {filteredUsers.length.toLocaleString("en-NG")} users
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  disabled={page <= 1}
+                  onClick={() => setPage((current) => Math.max(current - 1, 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  disabled={page >= totalPages}
+                  onClick={() =>
+                    setPage((current) => Math.min(current + 1, totalPages))
+                  }
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

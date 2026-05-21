@@ -38,6 +38,13 @@ type AdminUser = {
   email: string
 }
 
+type PaginationMeta = {
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+}
+
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
@@ -64,6 +71,7 @@ async function fetchAdminTransactions(filters: {
   status: string
   from: string
   to: string
+  page: number
 }) {
   const params = new URLSearchParams()
   if (filters.userId !== "all") params.set("userId", filters.userId)
@@ -71,11 +79,15 @@ async function fetchAdminTransactions(filters: {
   if (filters.status !== "all") params.set("status", filters.status)
   if (filters.from) params.set("from", filters.from)
   if (filters.to) params.set("to", filters.to)
+  params.set("page", String(filters.page))
+  params.set("pageSize", "25")
   const query = params.toString()
-  const data = await apiRequest<{ transactions: AdminTransaction[] }>(
+  return apiRequest<{
+    transactions: AdminTransaction[]
+    pagination: PaginationMeta
+  }>(
     `/api/admin/transactions${query ? `?${query}` : ""}`
   )
-  return data.transactions
 }
 
 export default function AdminTransactionsPage() {
@@ -84,22 +96,23 @@ export default function AdminTransactionsPage() {
   const [status, setStatus] = useState("all")
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
+  const [page, setPage] = useState(1)
   const filters = useMemo(
-    () => ({ userId, type, status, from, to }),
-    [from, status, to, type, userId]
+    () => ({ userId, type, status, from, to, page }),
+    [from, page, status, to, type, userId]
   )
   const { data: users = [] } = useQuery({
     queryKey: ["admin-users"],
     queryFn: fetchAdminUsers,
   })
-  const { data: transactions } = useQuery({
+  const { data } = useQuery({
     queryKey: ["admin-transactions", filters],
     queryFn: () => fetchAdminTransactions(filters),
   })
 
-  if (!transactions) return <AdminPageSkeleton variant="table" />
+  if (!data) return <AdminPageSkeleton variant="table" />
 
-  const rows = transactions.map((transaction) => [
+  const rows = data.transactions.map((transaction) => [
     transaction.profiles?.full_name ||
       transaction.profiles?.email ||
       "Unknown user",
@@ -129,7 +142,13 @@ export default function AdminTransactionsPage() {
       </div>
       <Card className="fintech-surface rounded-[1.35rem]">
         <CardContent className="grid gap-3 p-4 md:grid-cols-5">
-          <Select value={userId} onValueChange={setUserId}>
+          <Select
+            value={userId}
+            onValueChange={(value) => {
+              setUserId(value)
+              setPage(1)
+            }}
+          >
             <SelectTrigger className="h-11 w-full rounded-xl bg-card/75">
               <SelectValue placeholder="User" />
             </SelectTrigger>
@@ -143,7 +162,13 @@ export default function AdminTransactionsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={type} onValueChange={setType}>
+          <Select
+            value={type}
+            onValueChange={(value) => {
+              setType(value)
+              setPage(1)
+            }}
+          >
             <SelectTrigger className="h-11 w-full rounded-xl bg-card/75">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
@@ -158,7 +183,13 @@ export default function AdminTransactionsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={status} onValueChange={setStatus}>
+          <Select
+            value={status}
+            onValueChange={(value) => {
+              setStatus(value)
+              setPage(1)
+            }}
+          >
             <SelectTrigger className="h-11 w-full rounded-xl bg-card/75">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -175,14 +206,20 @@ export default function AdminTransactionsPage() {
           <Input
             type="date"
             value={from}
-            onChange={(event) => setFrom(event.target.value)}
+            onChange={(event) => {
+              setFrom(event.target.value)
+              setPage(1)
+            }}
             className="h-11 rounded-xl"
             aria-label="From date"
           />
           <Input
             type="date"
             value={to}
-            onChange={(event) => setTo(event.target.value)}
+            onChange={(event) => {
+              setTo(event.target.value)
+              setPage(1)
+            }}
             className="h-11 rounded-xl"
             aria-label="To date"
           />
@@ -193,7 +230,59 @@ export default function AdminTransactionsPage() {
         columns={["User", "Type", "Amount", "Status", "Reference ID", "Date"]}
         rows={rows}
         statusIndex={3}
+        footer={
+          <TablePagination
+            pagination={data.pagination}
+            onPrevious={() => setPage((current) => Math.max(current - 1, 1))}
+            onNext={() =>
+              setPage((current) =>
+                Math.min(current + 1, data.pagination.totalPages)
+              )
+            }
+          />
+        }
       />
+    </div>
+  )
+}
+
+function TablePagination({
+  pagination,
+  onPrevious,
+  onNext,
+}: {
+  pagination: PaginationMeta
+  onPrevious: () => void
+  onNext: () => void
+}) {
+  return (
+    <div className="flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-xs font-medium text-muted-foreground">
+        Page {pagination.page} of {pagination.totalPages} -{" "}
+        {pagination.total.toLocaleString("en-NG")} records
+      </p>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="rounded-xl"
+          disabled={pagination.page <= 1}
+          onClick={onPrevious}
+        >
+          Previous
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="rounded-xl"
+          disabled={pagination.page >= pagination.totalPages}
+          onClick={onNext}
+        >
+          Next
+        </Button>
+      </div>
     </div>
   )
 }

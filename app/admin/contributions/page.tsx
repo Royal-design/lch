@@ -10,6 +10,7 @@ import {
   AdminPageSkeleton,
   KpiCard,
 } from "@/components/admin/admin-ui"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
@@ -53,6 +54,12 @@ type ContributionReport = {
     description: string | null
     created_at: string
   }[]
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
 }
 
 function formatCurrency(amount: number) {
@@ -81,6 +88,7 @@ async function fetchContributionReport(filters: {
   period: string
   from: string
   to: string
+  page: number
 }) {
   const params = new URLSearchParams()
   if (filters.userId !== "all") params.set("userId", filters.userId)
@@ -88,6 +96,8 @@ async function fetchContributionReport(filters: {
   params.set("period", filters.period)
   if (filters.from) params.set("from", filters.from)
   if (filters.to) params.set("to", filters.to)
+  params.set("page", String(filters.page))
+  params.set("pageSize", "25")
 
   const query = params.toString()
   return apiRequest<ContributionReport>(
@@ -101,10 +111,11 @@ export default function AdminContributionsPage() {
   const [period, setPeriod] = useState("month")
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
+  const [page, setPage] = useState(1)
 
   const filters = useMemo(
-    () => ({ userId, status, period, from, to }),
-    [from, period, status, to, userId]
+    () => ({ userId, status, period, from, to, page }),
+    [from, page, period, status, to, userId]
   )
 
   const { data: users = [] } = useQuery({
@@ -137,7 +148,13 @@ export default function AdminContributionsPage() {
 
       <Card className="fintech-surface rounded-[1.35rem]">
         <CardContent className="grid gap-3 p-4 md:grid-cols-5">
-          <Select value={userId} onValueChange={setUserId}>
+          <Select
+            value={userId}
+            onValueChange={(value) => {
+              setUserId(value)
+              setPage(1)
+            }}
+          >
             <SelectTrigger className="h-11 w-full rounded-xl bg-card/75">
               <SelectValue placeholder="User" />
             </SelectTrigger>
@@ -151,7 +168,13 @@ export default function AdminContributionsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={period} onValueChange={setPeriod}>
+          <Select
+            value={period}
+            onValueChange={(value) => {
+              setPeriod(value)
+              setPage(1)
+            }}
+          >
             <SelectTrigger className="h-11 w-full rounded-xl bg-card/75">
               <SelectValue placeholder="Period" />
             </SelectTrigger>
@@ -163,7 +186,13 @@ export default function AdminContributionsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={status} onValueChange={setStatus}>
+          <Select
+            value={status}
+            onValueChange={(value) => {
+              setStatus(value)
+              setPage(1)
+            }}
+          >
             <SelectTrigger className="h-11 w-full rounded-xl bg-card/75">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -183,7 +212,10 @@ export default function AdminContributionsPage() {
             <Input
               type="date"
               value={from}
-              onChange={(event) => setFrom(event.target.value)}
+              onChange={(event) => {
+                setFrom(event.target.value)
+                setPage(1)
+              }}
               className="h-11 rounded-xl"
             />
           </label>
@@ -194,7 +226,10 @@ export default function AdminContributionsPage() {
             <Input
               type="date"
               value={to}
-              onChange={(event) => setTo(event.target.value)}
+              onChange={(event) => {
+                setTo(event.target.value)
+                setPage(1)
+              }}
               className="h-11 rounded-xl"
             />
           </label>
@@ -297,7 +332,59 @@ export default function AdminContributionsPage() {
         columns={["User", "Amount", "Status", "Plan", "Reference", "Date"]}
         rows={rows}
         statusIndex={2}
+        footer={
+          <TablePagination
+            pagination={data.pagination}
+            onPrevious={() => setPage((current) => Math.max(current - 1, 1))}
+            onNext={() =>
+              setPage((current) =>
+                Math.min(current + 1, data.pagination.totalPages)
+              )
+            }
+          />
+        }
       />
+    </div>
+  )
+}
+
+function TablePagination({
+  pagination,
+  onPrevious,
+  onNext,
+}: {
+  pagination: ContributionReport["pagination"]
+  onPrevious: () => void
+  onNext: () => void
+}) {
+  return (
+    <div className="flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-xs font-medium text-muted-foreground">
+        Page {pagination.page} of {pagination.totalPages} -{" "}
+        {pagination.total.toLocaleString("en-NG")} records
+      </p>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="rounded-xl"
+          disabled={pagination.page <= 1}
+          onClick={onPrevious}
+        >
+          Previous
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="rounded-xl"
+          disabled={pagination.page >= pagination.totalPages}
+          onClick={onNext}
+        >
+          Next
+        </Button>
+      </div>
     </div>
   )
 }
