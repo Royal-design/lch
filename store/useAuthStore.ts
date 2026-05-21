@@ -61,18 +61,6 @@ function startProfileSync(userId: string | null, refreshAuth: () => Promise<void
         refreshAuth().catch(() => null)
       }
     )
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "user_roles",
-        filter: `user_id=eq.${userId}`,
-      },
-      () => {
-        refreshAuth().catch(() => null)
-      }
-    )
     .subscribe()
 }
 
@@ -287,7 +275,7 @@ export const useAuthStore = create<AuthState>()(
 async function fetchProfile(userId: string): Promise<AuthProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name, email, phone, role, active_role, status, avatar_url, created_at, updated_at")
+    .select("id, full_name, email, phone, role, active_role, roles, status, avatar_url, created_at, updated_at")
     .eq("id", userId)
     .single()
 
@@ -295,13 +283,8 @@ async function fetchProfile(userId: string): Promise<AuthProfile | null> {
     return null
   }
 
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role_name")
-    .eq("user_id", userId)
-
   return {
     ...data,
-    roles: roles?.map((role) => role.role_name) ?? [data.active_role ?? data.role],
+    roles: data.roles?.length ? data.roles : [data.active_role ?? data.role],
   }
 }

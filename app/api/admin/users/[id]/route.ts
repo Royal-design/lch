@@ -68,18 +68,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       )
     }
 
-    const { data: currentAssignments, error: assignmentsError } = await supabase
-      .from("user_roles")
-      .select("role_name")
-      .eq("user_id", id)
-
-    if (assignmentsError) {
-      return NextResponse.json(
-        { error: "Unable to update user roles" },
-        { status: 500 }
-      )
-    }
-
     const currentActiveRole =
       typeof currentProfile.active_role === "string"
         ? currentProfile.active_role
@@ -93,9 +81,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       .update({
         role: activeRole,
         active_role: activeRole,
+        roles: selectedRoles,
       })
       .eq("id", id)
-      .select("id, full_name, email, phone, role, active_role, status, created_at")
+      .select("id, full_name, email, phone, role, active_role, roles, status, created_at")
       .single()
 
     if (error) {
@@ -103,41 +92,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         { error: "Unable to update user" },
         { status: 500 }
       )
-    }
-
-    const { error: upsertRolesError } = await supabase.from("user_roles").upsert(
-      selectedRoles.map((roleName) => ({
-        user_id: data.id,
-        role_name: roleName,
-      })),
-      { onConflict: "user_id,role_name" }
-    )
-
-    if (upsertRolesError) {
-      return NextResponse.json(
-        { error: "Unable to update user roles" },
-        { status: 500 }
-      )
-    }
-
-    const rolesToRemove =
-      currentAssignments
-        ?.map((assignment) => assignment.role_name)
-        .filter((roleName) => !selectedRoles.includes(roleName)) ?? []
-
-    if (rolesToRemove.length > 0) {
-      const { error: deleteRolesError } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", id)
-        .in("role_name", rolesToRemove)
-
-      if (deleteRolesError) {
-        return NextResponse.json(
-          { error: "Unable to update user roles" },
-          { status: 500 }
-        )
-      }
     }
 
     await createSystemNotification({
@@ -166,7 +120,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     .from("profiles")
     .update({ status: validationResult.data.status })
     .eq("id", id)
-    .select("id, full_name, email, phone, role, active_role, status, created_at")
+    .select("id, full_name, email, phone, role, active_role, roles, status, created_at")
     .single()
 
   if (error) {

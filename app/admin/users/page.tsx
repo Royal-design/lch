@@ -44,6 +44,7 @@ interface Profile {
   phone: string | null
   role: string
   active_role?: string | null
+  roles?: string[] | null
   status: string
   created_at: string
 }
@@ -117,7 +118,10 @@ function formatDate(dateString: string): string {
 }
 
 function getUserRoleNames(user: ProfileWithWallet): string[] {
-  const assignedRoles = user.user_roles?.map((role) => role.role_name).filter(Boolean) ?? []
+  const assignedRoles =
+    user.roles?.filter(Boolean) ??
+    user.user_roles?.map((role) => role.role_name).filter(Boolean) ??
+    []
   const fallbackRole = user.active_role ?? user.role
   const roleNames = assignedRoles.length > 0 ? assignedRoles : [fallbackRole]
 

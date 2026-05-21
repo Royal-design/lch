@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, email, phone, role, active_role, status, avatar_url")
+      .select("id, full_name, email, phone, role, active_role, roles, status, avatar_url")
       .eq("id", data.user.id)
       .single()
 
@@ -58,14 +58,9 @@ export async function POST(req: NextRequest) {
       .update({ last_sign_in_at: new Date().toISOString() })
       .eq("id", data.user.id)
 
-    const { data: roleRows } = await supabase
-      .from("user_roles")
-      .select("role_name")
-      .eq("user_id", data.user.id)
-
-    const roles = roleRows?.map((role) => role.role_name) ?? [
-      profile.active_role ?? profile.role,
-    ]
+    const roles = profile.roles?.length
+      ? profile.roles
+      : [profile.active_role ?? profile.role]
     const activeRole = profile.active_role ?? profile.role
 
     const response = NextResponse.json({

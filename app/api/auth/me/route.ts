@@ -14,7 +14,7 @@ export async function GET() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, full_name, email, phone, role, active_role, status, avatar_url")
+    .select("id, full_name, email, phone, role, active_role, roles, status, avatar_url")
     .eq("id", user.id)
     .single()
 
@@ -25,19 +25,13 @@ export async function GET() {
     )
   }
 
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role_name")
-    .eq("user_id", user.id)
-
   return NextResponse.json({
     user,
     profile: {
       ...profile,
-      roles:
-        roles?.map((role) => role.role_name) ?? [
-          profile.active_role ?? profile.role,
-        ],
+      roles: profile.roles?.length
+        ? profile.roles
+        : [profile.active_role ?? profile.role],
     },
   })
 }

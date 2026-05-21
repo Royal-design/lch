@@ -9,8 +9,7 @@ declare
   table_name text;
 begin
   foreach table_name in array array[
-    'profiles',
-    'user_roles'
+    'profiles'
   ]
   loop
     if not exists (

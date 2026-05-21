@@ -36,14 +36,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { data: assignedRole } = await context.supabase
-    .from("user_roles")
-    .select("role_name")
-    .eq("user_id", context.user.id)
-    .eq("role_name", role)
-    .maybeSingle()
+  const assignedRoles = context.profile?.roles?.length
+    ? context.profile.roles
+    : [context.profile?.active_role ?? context.profile?.role ?? "user"]
 
-  if (!assignedRole && context.profile?.role !== role) {
+  if (!assignedRoles.includes(role)) {
     return NextResponse.json(
       { error: "This role is not assigned to your account" },
       { status: 403 }
@@ -54,7 +51,7 @@ export async function POST(request: NextRequest) {
     .from("profiles")
     .update({ active_role: role, role })
     .eq("id", context.user.id)
-    .select("id, full_name, email, phone, role, active_role, status, avatar_url, created_at, updated_at")
+    .select("id, full_name, email, phone, role, active_role, roles, status, avatar_url, created_at, updated_at")
     .single()
 
   if (error) {
@@ -64,15 +61,10 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role_name")
-    .eq("user_id", context.user.id)
-
   return NextResponse.json({
     profile: {
       ...profile,
-      roles: roles?.map((row) => row.role_name) ?? [role],
+      roles: profile.roles?.length ? profile.roles : [role],
     },
     redirectTo: role === "admin" ? "/admin" : "/dashboard",
   })
