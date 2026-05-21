@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Search, Shield, UserCheck, UserX } from "lucide-react"
+import { AlertTriangle, Loader2, Search, Shield, Trash2, UserCheck, UserX } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
@@ -89,6 +89,14 @@ async function updateUserRole(userId: string, role: string): Promise<boolean> {
   return true
 }
 
+async function deleteUser(userId: string): Promise<boolean> {
+  await apiRequest(`/api/admin/users/${userId}`, {
+    method: "DELETE",
+  })
+  toast.success("User account deleted. Email confirmation sent.")
+  return true
+}
+
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
@@ -114,7 +122,7 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<ProfileWithWallet | null>(
     null
   )
-  const [actionDialog, setActionDialog] = useState<"status" | "role" | null>(
+  const [actionDialog, setActionDialog] = useState<"status" | "role" | "delete" | null>(
     null
   )
   const [selectedRole, setSelectedRole] = useState("")
@@ -160,6 +168,21 @@ export default function AdminUsersPage() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => deleteUser(userId),
+    onSuccess: (success) => {
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ["admin-users"] })
+        queryClient.invalidateQueries({ queryKey: ["admin-overview"] })
+        setSelectedUser(null)
+        setActionDialog(null)
+      }
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to delete user")
+    },
+  })
+
   const filteredUsers = useMemo(
     () =>
       users.filter((user) => {
@@ -197,6 +220,11 @@ export default function AdminUsersPage() {
     setActionDialog("role")
   }
 
+  const handleDeleteAction = (user: ProfileWithWallet) => {
+    setSelectedUser(user)
+    setActionDialog("delete")
+  }
+
   const confirmStatusChange = () => {
     if (!selectedUser) return
 
@@ -208,6 +236,12 @@ export default function AdminUsersPage() {
     if (!selectedUser || !selectedRole) return
 
     roleMutation.mutate({ userId: selectedUser.id, role: selectedRole })
+  }
+
+  const confirmDeleteUser = () => {
+    if (!selectedUser) return
+
+    deleteMutation.mutate(selectedUser.id)
   }
 
   if (usersLoading) {
@@ -366,6 +400,15 @@ export default function AdminUsersPage() {
                           <Shield className="size-3.5" />
                           Role
                         </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteAction(user)}
+                          className="rounded-xl"
+                        >
+                          <Trash2 className="size-3.5" />
+                          Delete
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -454,6 +497,53 @@ export default function AdminUsersPage() {
                 : selectedUser?.status === "active"
                   ? "Suspend"
                   : "Activate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog
+        open={actionDialog === "delete"}
+        onOpenChange={(open) => !open && setActionDialog(null)}
+      >
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <div className="mx-auto mb-2 grid size-12 place-items-center rounded-full bg-destructive/10 text-destructive sm:mx-0">
+              <AlertTriangle className="size-5" />
+            </div>
+            <DialogTitle>Delete User Account</DialogTitle>
+            <DialogDescription>
+              This will permanently delete {selectedUser?.full_name || selectedUser?.email}
+              {" "}and remove their wallet, transactions, contribution plans, and notifications.
+              The user will receive an email only after the delete request succeeds.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setActionDialog(null)}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDeleteUser}
+              disabled={deleteMutation.isPending}
+              variant="destructive"
+              className="rounded-xl"
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-4" />
+                  Delete Account
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

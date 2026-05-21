@@ -1,20 +1,52 @@
 "use client"
 
+import { useMutation } from "@tanstack/react-query"
 import { useQuery } from "@tanstack/react-query"
-import { Mail, Phone, ShieldCheck, User } from "lucide-react"
+import { AlertTriangle, Loader2, Mail, Phone, ShieldCheck, Trash2, User } from "lucide-react"
+import { useState } from "react"
+import { toast } from "sonner"
 
 import { SkeletonBlock } from "@/components/admin/admin-ui"
 import { ModeToggle } from "@/components/mode-toggle"
 import { fetchCurrentProfile } from "@/components/profile-query"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { apiRequest } from "@/lib/api-client"
 import { useAuthStore } from "@/store/useAuthStore"
 
 export default function ProfilePage() {
-  const { user } = useAuthStore()
+  const { user, signOut } = useAuthStore()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile"],
     queryFn: fetchCurrentProfile,
+  })
+  const deleteAccountMutation = useMutation({
+    mutationFn: () =>
+      apiRequest<{ message: string }>("/api/profile", {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      toast.success("Your account was deleted. Email confirmation sent.")
+      setDeleteDialogOpen(false)
+      window.setTimeout(() => {
+        void signOut()
+      }, 900)
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to delete account"
+      )
+    },
   })
 
   const email = user?.email ?? "member@lch.app"
@@ -104,8 +136,74 @@ export default function ProfilePage() {
             </div>
             <ModeToggle />
           </div>
+          <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-destructive">
+                  Delete account
+                </p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Permanently remove your profile, wallet, contribution plans,
+                  transactions, and notifications.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                className="rounded-xl"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="size-4" />
+                Delete
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <div className="mx-auto mb-2 grid size-12 place-items-center rounded-full bg-destructive/10 text-destructive sm:mx-0">
+              <AlertTriangle className="size-5" />
+            </div>
+            <DialogTitle>Delete Your Account</DialogTitle>
+            <DialogDescription>
+              This action is permanent. Your wallet records, contribution plans,
+              transactions, and notifications will be removed, and you will be
+              signed out after the account is deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="rounded-xl"
+              disabled={deleteAccountMutation.isPending}
+              onClick={() => deleteAccountMutation.mutate()}
+            >
+              {deleteAccountMutation.isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-4" />
+                  Delete Account
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

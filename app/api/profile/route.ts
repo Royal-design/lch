@@ -1,5 +1,7 @@
 import { readRequestBody } from "@/lib/request-body"
 import { requireActiveUser } from "@/lib/auth-server"
+import { sendNotificationEmail } from "@/lib/notifications"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { profileUpdateSchema } from "@/schemas/auth"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -58,4 +60,41 @@ export async function PATCH(request: NextRequest) {
   })
 
   return NextResponse.json({ profile: data })
+}
+
+export async function DELETE() {
+  const context = await requireActiveUser()
+
+  if (context.error || !context.user || !context.profile) {
+    return NextResponse.json({ error: context.error }, { status: context.status })
+  }
+
+  const supabase = createAdminClient()
+
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Admin service client is not configured" },
+      { status: 500 }
+    )
+  }
+
+  const { error } = await supabase.auth.admin.deleteUser(context.user.id)
+
+  if (error) {
+    return NextResponse.json(
+      { error: "Unable to delete your account" },
+      { status: 500 }
+    )
+  }
+
+  if (context.profile.email) {
+    await sendNotificationEmail({
+      to: context.profile.email,
+      subject: "Your LCH account was deleted",
+      message:
+        "Your Leenah Contribution Home account has been deleted successfully. We are sorry to see you go.",
+    })
+  }
+
+  return NextResponse.json({ message: "Account deleted" })
 }
