@@ -10,6 +10,9 @@ function createDepositReference() {
 }
 
 function getAppUrl(request: NextRequest) {
+  if (process.env.NODE_ENV === "development") {
+    return request.nextUrl.origin
+  }
   return (
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||

@@ -80,3 +80,26 @@ export async function verifyPaystackTransaction(reference: string) {
     `/transaction/verify/${encodeURIComponent(reference)}`
   )
 }
+
+export type PaystackBank = {
+  name: string
+  code: string
+  id: number
+}
+
+export type PaystackResolveData = {
+  account_number: string
+  account_name: string
+  bank_id: number
+}
+
+export async function getPaystackBanks() {
+  return paystackRequest<PaystackBank[]>("/bank?country=nigeria")
+}
+
+export async function resolveBankAccount(accountNumber: string, bankCode: string) {
+  return paystackRequest<PaystackResolveData>(
+    `/bank/resolve?account_number=${encodeURIComponent(accountNumber)}&bank_code=${encodeURIComponent(bankCode)}`
+  )
+}
+

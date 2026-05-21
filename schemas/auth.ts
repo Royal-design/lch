@@ -246,6 +246,7 @@ export const withdrawalRequestSchema = z.object({
     message: "Minimum withdrawal is NGN 500",
   }),
   bankName: z.string().min(2, "Enter bank name").max(80, "Bank name is too long"),
+  bankCode: z.string().optional(),
   accountNumber: z
     .string()
     .regex(/^[0-9]{10}$/, "Enter a valid 10 digit account number"),
