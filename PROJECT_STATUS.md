@@ -99,6 +99,8 @@ Do not run `npm.cmd run build` by default because it is slow in this project. Us
 - `database-mile-9-multi-role-active-role.sql`: first multi-role support using `user_roles`.
 - `database-mile-10-realtime-role-sync.sql`: realtime profile role sync.
 - `database-mile-11-profile-roles-array.sql`: current preferred roles model on `profiles.roles`.
+- `database-mile-12-paystack-wallet-deposits.sql`: Paystack wallet deposit fields and atomic wallet crediting.
+- `database-mile-13-withdrawals-flexible-lock.sql`: withdrawal request/reserve/approve/reject functions and flexible plan withdrawal access.
 
 ## Remaining Work
 
@@ -112,16 +114,22 @@ Do not run `npm.cmd run build` by default because it is slow in this project. Us
 
 ### Payments/Wallets
 
-- Wire real payment provider for deposits/top-ups.
-- Implement real withdrawal request backend and admin approval/rejection workflow.
-- Add transaction references and reconciliation rules for payment callbacks.
+- Paystack wallet deposit initialization, verification, webhook handling, and wallet crediting are now wired in code.
+- Apply `database-mile-12-paystack-wallet-deposits.sql` before testing deposits.
+- Configure Paystack callback URL as `/dashboard/wallet/deposit/callback`.
+- Configure Paystack webhook URL as `/api/paystack/webhook`.
+- Withdrawal request backend and admin approval/rejection workflow are now wired.
+- Apply `database-mile-13-withdrawals-flexible-lock.sql` before testing withdrawals.
+- Paystack Transfers or another payout rail still needs to be wired later for automatic bank payouts.
+- Add transaction references and reconciliation rules for withdrawal payout callbacks when transfer automation is added.
 - Add wallet ledger integrity checks so balance changes are auditable.
 
 ### Contribution/Ajo Product
 
 - Finish Ajo group lifecycle beyond admin-created type templates.
 - Implement group membership rules, member limits, payout order, maturity handling, and owner-controlled withdrawals.
-- Add better validation for contribution frequency and lock rules.
+- Flexible/no-lock plans can now be created with `withdrawal_access = 'anytime'`.
+- Add better validation for contribution frequency and maturity-only lock rules.
 - Add plan close/cancel flows with wallet impact.
 
 ### Admin Operations
@@ -169,4 +177,3 @@ order by created_at desc;
 3. Test admin role assignment from `/admin/users`.
 4. Test navbar role switcher without refreshing.
 5. If all good, drop `public.user_roles` with a small cleanup migration.
-

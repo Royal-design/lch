@@ -49,8 +49,8 @@ export function CreateContributionPlanForm({
       planName: "",
       targetAmount: "",
       frequency: "monthly",
-      withdrawalAccess: "owner-controlled",
-      lockDuration: "6",
+      withdrawalAccess: "anytime",
+      lockDuration: "0",
       description: "",
     },
   })
@@ -148,7 +148,8 @@ export function CreateContributionPlanForm({
                     <SelectValue placeholder="Choose preference" />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    <SelectItem value="1">Flexible / 1 month</SelectItem>
+                    <SelectItem value="0">Flexible / no lock</SelectItem>
+                    <SelectItem value="1">1 month</SelectItem>
                     <SelectItem value="3">3 months</SelectItem>
                     <SelectItem value="6">6 months</SelectItem>
                     <SelectItem value="12">12 months</SelectItem>

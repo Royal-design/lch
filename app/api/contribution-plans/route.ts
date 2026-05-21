@@ -12,7 +12,7 @@ export async function GET() {
 
   const { data, error } = await context.supabase
     .from("contribution_plans")
-    .select("id, title, target_amount, saved_amount, lock_duration, status, created_at")
+    .select("id, title, target_amount, saved_amount, lock_duration, withdrawal_access, status, created_at")
     .eq("user_id", context.user.id)
     .order("created_at", { ascending: false })
 
@@ -58,10 +58,14 @@ export async function POST(request: NextRequest) {
       user_id: context.user.id,
       title: values.planName,
       target_amount: values.targetAmount,
-      lock_duration: `${values.lockDuration} months`,
+      lock_duration:
+        values.withdrawalAccess === "anytime" || values.lockDuration === 0
+          ? "Flexible / no lock"
+          : `${values.lockDuration} months`,
+      withdrawal_access: values.withdrawalAccess,
       status: "active",
     })
-    .select("id, title, target_amount, saved_amount, lock_duration, status, created_at")
+    .select("id, title, target_amount, saved_amount, lock_duration, withdrawal_access, status, created_at")
     .single()
 
   if (error) {

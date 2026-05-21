@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertCircle, ArrowUpRight } from "lucide-react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { useQueryClient } from "@tanstack/react-query"
 
 import {
   FormCard,
@@ -13,25 +14,28 @@ import {
   formatCurrencyInput,
 } from "@/components/forms/form-system"
 import { FieldGroup } from "@/components/ui/field"
+import { apiRequest } from "@/lib/api-client"
 import {
   withdrawalRequestSchema,
   type WithdrawalRequestSchema,
   type WithdrawalRequestValues,
 } from "@/schemas/auth"
 
-const availableBalance = 522500
-
 function parseAmount(value: string) {
   return Number(value.replace(/[^\d.]/g, ""))
 }
 
 export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
+  const queryClient = useQueryClient()
   const form = useForm<WithdrawalRequestSchema, unknown, WithdrawalRequestValues>({
     resolver: zodResolver(withdrawalRequestSchema),
     mode: "onBlur",
     reValidateMode: "onBlur",
     defaultValues: {
       amount: "",
+      bankName: "",
+      accountNumber: "",
+      accountName: "",
       reason: "",
     },
   })
@@ -41,11 +45,25 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
     name: "amount",
   })
   const amount = parseAmount(String(watchedAmount ?? ""))
-  const exceedsBalance = amount > availableBalance
 
   const onSubmit = async (data: WithdrawalRequestValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 650))
-    toast.success(`Withdrawal request for NGN ${data.amount.toLocaleString("en-NG")} validated.`)
+    try {
+      await apiRequest("/api/wallet/withdrawals", {
+        method: "POST",
+        body: JSON.stringify(data),
+      })
+      toast.success(
+        `Withdrawal request for NGN ${data.amount.toLocaleString(
+          "en-NG"
+        )} submitted.`
+      )
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+      form.reset()
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to request withdrawal"
+      )
+    }
   }
 
   const content = (
@@ -59,7 +77,7 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
               {...field}
               label="Amount"
               error={fieldState.error?.message}
-              hint="Available balance: NGN 522,500."
+              hint="Funds are reserved while an admin reviews the request."
               inputMode="numeric"
               placeholder="NGN 50,000"
               value={field.value ? `NGN ${field.value}` : ""}
@@ -70,14 +88,58 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
           )}
         />
 
-        {exceedsBalance ? (
-          <div className="flex gap-3 rounded-2xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+        {amount > 0 ? (
+          <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-400/15 dark:bg-amber-400/10 dark:text-amber-200">
             <AlertCircle className="mt-0.5 size-4 shrink-0" />
             <p className="font-medium">
-              This request is above your available wallet balance.
+              Make sure these bank details are correct before submitting.
             </p>
           </div>
         ) : null}
+
+        <Controller
+          name="bankName"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <FormInput
+              {...field}
+              label="Bank name"
+              error={fieldState.error?.message}
+              placeholder="OPay, GTBank, Access Bank"
+              autoComplete="off"
+            />
+          )}
+        />
+
+        <Controller
+          name="accountNumber"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <FormInput
+              {...field}
+              label="Account number"
+              error={fieldState.error?.message}
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="0123456789"
+              autoComplete="off"
+            />
+          )}
+        />
+
+        <Controller
+          name="accountName"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <FormInput
+              {...field}
+              label="Account name"
+              error={fieldState.error?.message}
+              placeholder="Account holder name"
+              autoComplete="off"
+            />
+          )}
+        />
 
         <Controller
           name="reason"
@@ -100,8 +162,7 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
         <SubmitButton
           type="submit"
           loading={form.formState.isSubmitting}
-          loadingText="Reviewing..."
-          disabled={exceedsBalance}
+          loadingText="Submitting..."
         >
           Request withdrawal
         </SubmitButton>
@@ -114,7 +175,7 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
   return (
     <FormCard
       title="Request withdrawal"
-      description="Validate a withdrawal request before Week 2 API wiring."
+      description="Reserve wallet funds while an admin reviews your payout request."
       icon={<ArrowUpRight className="size-5" />}
     >
       {content}

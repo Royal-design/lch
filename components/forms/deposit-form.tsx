@@ -20,7 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiRequest } from "@/lib/api-client"
 import { depositSchema, type DepositSchema, type DepositValues } from "@/schemas/auth"
+
+type DepositInitializeResponse = {
+  reference: string
+  authorizationUrl: string
+}
 
 export function DepositForm({ framed = true }: { framed?: boolean }) {
   const form = useForm<DepositSchema, unknown, DepositValues>({
@@ -34,8 +40,22 @@ export function DepositForm({ framed = true }: { framed?: boolean }) {
   })
 
   const onSubmit = async (data: DepositValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 650))
-    toast.success(`Deposit of NGN ${data.amount.toLocaleString("en-NG")} validated.`)
+    try {
+      const response = await apiRequest<DepositInitializeResponse>(
+        "/api/wallet/deposit/initialize",
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        }
+      )
+
+      toast.success("Redirecting to Paystack checkout.")
+      window.location.assign(response.authorizationUrl)
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to start deposit"
+      )
+    }
   }
 
   const content = (
@@ -67,7 +87,7 @@ export function DepositForm({ framed = true }: { framed?: boolean }) {
             <FormFieldShell
               label="Funding source"
               error={fieldState.error?.message}
-              hint="UI only for now. We will connect payments in Week 2."
+              hint="Paystack will show available payment options at checkout."
             >
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger className="h-12 w-full rounded-xl bg-card/75 px-4">

@@ -212,7 +212,7 @@ export const contributionPlanSchema = z.object({
       z
         .number("Choose a valid duration")
         .int("Choose a valid duration")
-        .min(1, "Lock for at least 1 month")
+        .min(0, "Choose a valid duration")
         .max(36, "Lock duration is too long")
     ),
   description: z.string().max(140, "Keep this under 140 characters").optional(),
@@ -242,9 +242,14 @@ export type DepositSchema = z.input<typeof depositSchema>
 export type DepositValues = z.output<typeof depositSchema>
 
 export const withdrawalRequestSchema = z.object({
-  amount: amountString.refine((amount) => amount <= 522500, {
-    message: "Amount exceeds available balance",
+  amount: amountString.refine((amount) => amount >= 500, {
+    message: "Minimum withdrawal is NGN 500",
   }),
+  bankName: z.string().min(2, "Enter bank name").max(80, "Bank name is too long"),
+  accountNumber: z
+    .string()
+    .regex(/^[0-9]{10}$/, "Enter a valid 10 digit account number"),
+  accountName: z.string().min(2, "Enter account name").max(80, "Account name is too long"),
   reason: z.string().max(120, "Keep this under 120 characters").optional(),
 })
 

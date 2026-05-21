@@ -1,5 +1,6 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -26,27 +27,108 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiRequest } from "@/lib/api-client"
 
-const walletStats = [
-  { icon: Landmark, label: "Locked savings", value: "NGN 320,000", caption: "Maturing across 2 plans" },
-  { icon: CreditCard, label: "Pending withdrawals", value: "NGN 18,500", caption: "Processing review" },
-  { icon: Banknote, label: "This month inflow", value: "NGN 250,000", caption: "5 successful credits" },
-]
+type DashboardResponse = {
+  wallet: {
+    balance: number
+    locked_balance: number
+  }
+  transactions: {
+    id: string
+    type: string
+    amount: number
+    status: string
+    reference: string
+    description: string | null
+    created_at: string
+  }[]
+}
 
-const ledger = [
-  ["Wallet top up", "Today, 9:24 AM", "+NGN 50,000", "Successful"],
-  ["Withdrawal request", "Yesterday, 6:12 PM", "-NGN 18,500", "Processing"],
-  ["Locked savings", "May 16, 2026", "NGN 120,000", "Locked"],
-]
+function fetchDashboard() {
+  return apiRequest<DashboardResponse>("/api/dashboard")
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  }).format(amount)
+}
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString("en-NG", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+}
+
+function transactionTitle(type: string, description: string | null) {
+  if (description) return description
+  if (type === "deposit") return "Wallet top up"
+  if (type === "withdrawal") return "Withdrawal request"
+  if (type === "contribution") return "Contribution payment"
+  return type.replaceAll("_", " ")
+}
 
 export default function WalletPage() {
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const filteredLedger = ledger.filter(([title, time, amount, status]) => {
-    const matchesQuery = `${title} ${time} ${amount} ${status}`
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: fetchDashboard,
+  })
+  const walletBalance = Number(data?.wallet.balance) || 0
+  const lockedBalance = Number(data?.wallet.locked_balance) || 0
+  const transactions = data?.transactions ?? []
+  const pendingWithdrawals = transactions
+    .filter((transaction) => transaction.type === "withdrawal" && transaction.status !== "successful")
+    .reduce((total, transaction) => total + Number(transaction.amount), 0)
+  const monthlyInflow = transactions
+    .filter((transaction) => {
+      const transactionDate = new Date(transaction.created_at)
+      const now = new Date()
+
+      return (
+        transaction.type === "deposit" &&
+        transaction.status === "successful" &&
+        transactionDate.getMonth() === now.getMonth() &&
+        transactionDate.getFullYear() === now.getFullYear()
+      )
+    })
+    .reduce((total, transaction) => total + Number(transaction.amount), 0)
+  const walletStats = [
+    {
+      icon: Landmark,
+      label: "Locked savings",
+      value: formatCurrency(lockedBalance),
+      caption: "Reserved across plans",
+    },
+    {
+      icon: CreditCard,
+      label: "Pending withdrawals",
+      value: formatCurrency(pendingWithdrawals),
+      caption: "Processing review",
+    },
+    {
+      icon: Banknote,
+      label: "This month inflow",
+      value: formatCurrency(monthlyInflow),
+      caption: "Successful wallet deposits",
+    },
+  ]
+  const filteredLedger = transactions.filter((transaction) => {
+    const title = transactionTitle(transaction.type, transaction.description)
+    const amount =
+      transaction.type === "withdrawal"
+        ? `-${formatCurrency(Number(transaction.amount))}`
+        : formatCurrency(Number(transaction.amount))
+    const matchesQuery = `${title} ${transaction.reference} ${amount} ${transaction.status}`
       .toLowerCase()
       .includes(query.toLowerCase())
-    const matchesStatus = statusFilter === "all" || status.toLowerCase() === statusFilter
+    const matchesStatus = statusFilter === "all" || transaction.status === statusFilter
 
     return matchesQuery && matchesStatus
   })
@@ -63,7 +145,7 @@ export default function WalletPage() {
                 Primary wallet
               </div>
               <h1 className="mt-5 text-[2.5rem] font-bold leading-none tracking-tight sm:text-5xl">
-                NGN 522,500
+                {isLoading ? "..." : formatCurrency(walletBalance)}
               </h1>
               <p className="mt-3 max-w-lg text-sm leading-6 text-white/68">
                 Funds available for withdrawals, transfers, and new contribution plans.
@@ -129,15 +211,23 @@ export default function WalletPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            {filteredLedger.map(([title, time, amount, status]) => (
-              <div key={`${title}-${time}`} className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/20 hover:bg-card">
+            {filteredLedger.map((transaction) => {
+              const title = transactionTitle(transaction.type, transaction.description)
+              const amount =
+                transaction.type === "withdrawal"
+                  ? `-${formatCurrency(Number(transaction.amount))}`
+                  : formatCurrency(Number(transaction.amount))
+              const status = transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)
+
+              return (
+              <div key={transaction.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/20 hover:bg-card">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-primary">
-                    {amount.startsWith("-") ? <ArrowUpRight className="size-4" /> : <ArrowDownLeft className="size-4" />}
+                    {transaction.type === "withdrawal" ? <ArrowUpRight className="size-4" /> : <ArrowDownLeft className="size-4" />}
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold">{title}</p>
-                    <p className="text-xs text-muted-foreground">{time}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(transaction.created_at)}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -145,7 +235,7 @@ export default function WalletPage() {
                   <span className="status-pill mt-1">{status}</span>
                 </div>
               </div>
-            ))}
+            )})}
             {filteredLedger.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-8 text-center">
                 <Filter className="mx-auto size-5 text-muted-foreground" />
