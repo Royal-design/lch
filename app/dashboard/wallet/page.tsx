@@ -179,7 +179,7 @@ export default function WalletPage() {
                 </Button>
               }
             >
-              <WithdrawalRequestForm framed={false} />
+              <WithdrawalRequestForm framed={false} walletBalance={walletBalance} />
             </FormModal>
           </div>
         </div>

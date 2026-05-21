@@ -1,11 +1,19 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, ArrowUpRight, Search, Check, ChevronDown, Loader2 } from "lucide-react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import {
+  AlertCircle,
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  Loader2,
+  Search,
+  Wallet,
+} from "lucide-react"
 import * as React from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import {
   FormCard,
@@ -28,7 +36,30 @@ function parseAmount(value: string) {
   return Number(value.replace(/[^\d.]/g, ""))
 }
 
-export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  }).format(amount)
+}
+
+type DashboardWalletResponse = {
+  wallet: {
+    balance: number
+    locked_balance: number
+  }
+  transactions: unknown[]
+  plans?: unknown[]
+}
+
+export function WithdrawalRequestForm({
+  framed = true,
+  walletBalance: externalBalance,
+}: {
+  framed?: boolean
+  walletBalance?: number
+}) {
   const queryClient = useQueryClient()
   const [bankSearchQuery, setBankSearchQuery] = React.useState("")
   const [isBankDropdownOpen, setIsBankDropdownOpen] = React.useState(false)
@@ -36,7 +67,21 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
   const [resolveError, setResolveError] = React.useState<string | null>(null)
   const [resolvedName, setResolvedName] = React.useState<string>("")
 
-  const form = useForm<WithdrawalRequestSchema, unknown, WithdrawalRequestValues>({
+  // Fetch wallet balance if not provided externally
+  const { data: dashboardData } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => apiRequest<DashboardWalletResponse>("/api/dashboard"),
+    staleTime: 30_000,
+  })
+
+  const walletBalance =
+    externalBalance ?? (Number(dashboardData?.wallet?.balance) || 0)
+
+  const form = useForm<
+    WithdrawalRequestSchema,
+    unknown,
+    WithdrawalRequestValues
+  >({
     resolver: zodResolver(withdrawalRequestSchema),
     mode: "onBlur",
     reValidateMode: "onBlur",
@@ -54,7 +99,9 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
   const { data: banks = [], isLoading: isLoadingBanks } = useQuery({
     queryKey: ["banks"],
     queryFn: async () => {
-      const data = await apiRequest<{ banks: { name: string; code: string }[] }>("/api/banks")
+      const data = await apiRequest<{
+        banks: { name: string; code: string }[]
+      }>("/api/banks")
       return data.banks
     },
     staleTime: 12 * 60 * 60 * 1000, // cache for 12 hours
@@ -65,9 +112,14 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
     name: "amount",
   })
   const amount = parseAmount(String(watchedAmount ?? ""))
+  const remainingBalance = walletBalance - amount
+  const isOverBalance = amount > 0 && amount > walletBalance
 
   const watchedBankCode = useWatch({ control: form.control, name: "bankCode" })
-  const watchedAccountNumber = useWatch({ control: form.control, name: "accountNumber" })
+  const watchedAccountNumber = useWatch({
+    control: form.control,
+    name: "accountNumber",
+  })
 
   // Account name auto-resolution effect
   React.useEffect(() => {
@@ -85,9 +137,13 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
             setResolvedName(res.accountName)
             setResolveError(null)
           }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           if (active) {
-            const errorMsg = error instanceof Error ? error.message : "Could not resolve account name"
+            const errorMsg =
+              error instanceof Error
+                ? error.message
+                : "Could not resolve account name"
             setResolveError(errorMsg)
             form.setValue("accountName", "")
             setResolvedName("")
@@ -113,6 +169,13 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
   }, [watchedAccountNumber, watchedBankCode, form])
 
   const onSubmit = async (data: WithdrawalRequestValues) => {
+    if (data.amount > walletBalance) {
+      toast.error(
+        `Insufficient wallet balance. You have ${formatCurrency(walletBalance)} available.`
+      )
+      return
+    }
+
     try {
       await apiRequest("/api/wallet/withdrawals", {
         method: "POST",
@@ -141,26 +204,90 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
           name="amount"
           control={form.control}
           render={({ field, fieldState }) => (
-            <FormInput
-              {...field}
-              label="Amount"
-              error={fieldState.error?.message}
-              hint="Funds are reserved while an admin reviews the request."
-              inputMode="numeric"
-              placeholder="NGN 50,000"
-              value={field.value ? `NGN ${field.value}` : ""}
-              onChange={(event) =>
-                field.onChange(formatCurrencyInput(event.target.value))
-              }
-            />
+            <div>
+              <FormInput
+                {...field}
+                label="Amount"
+                error={
+                  fieldState.error?.message ||
+                  (isOverBalance
+                    ? "Amount exceeds available balance"
+                    : undefined)
+                }
+                inputMode="numeric"
+                placeholder="NGN 50,000"
+                value={field.value ? `NGN ${field.value}` : ""}
+                onChange={(event) =>
+                  field.onChange(formatCurrencyInput(event.target.value))
+                }
+              />
+
+              {/* Available balance indicator */}
+              <div className="mt-2 flex items-center gap-1.5 rounded-xl border border-border/60 bg-muted/30 px-3.5 py-2.5">
+                <Wallet className="size-3.5 shrink-0 text-primary/70" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  Available balance:
+                </span>
+                <span className="ml-auto text-xs font-bold text-foreground">
+                  {formatCurrency(walletBalance)}
+                </span>
+              </div>
+
+              {/* Remaining / Total calculation strip */}
+              {amount > 0 && (
+                <div
+                  className={cn(
+                    "mt-2 flex items-center justify-between rounded-xl border px-3.5 py-2.5 transition-colors",
+                    isOverBalance
+                      ? "border-rose-300/60 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10"
+                      : "border-emerald-300/60 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+                  )}
+                >
+                  <div>
+                    <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                      Remaining
+                    </p>
+                    <p
+                      className={cn(
+                        "text-sm font-bold",
+                        isOverBalance
+                          ? "text-rose-600 dark:text-rose-400"
+                          : "text-emerald-600 dark:text-emerald-400"
+                      )}
+                    >
+                      {isOverBalance
+                        ? `-${formatCurrency(Math.abs(remainingBalance))}`
+                        : formatCurrency(remainingBalance)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                      Withdrawal
+                    </p>
+                    <p className="text-sm font-bold text-foreground">
+                      {formatCurrency(amount)}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         />
 
         {amount > 0 ? (
-          <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-400/15 dark:bg-amber-400/10 dark:text-amber-200">
+          <div
+            className={cn(
+              "flex gap-3 rounded-2xl border p-4 text-sm",
+              isOverBalance
+                ? "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-400/15 dark:bg-rose-400/10 dark:text-rose-200"
+                : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/15 dark:bg-amber-400/10 dark:text-amber-200"
+            )}
+          >
             <AlertCircle className="mt-0.5 size-4 shrink-0" />
             <p className="font-medium">
-              Make sure these bank details are correct before submitting.
+              {isOverBalance
+                ? `You only have ${formatCurrency(walletBalance)} available. Reduce the withdrawal amount.`
+                : "Make sure these bank details are correct before submitting."}
             </p>
           </div>
         ) : null}
@@ -175,13 +302,22 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
 
             return (
               <div className="relative">
-                <FormFieldShell label="Bank name" error={fieldState.error?.message}>
+                <FormFieldShell
+                  label="Bank name"
+                  error={fieldState.error?.message}
+                >
                   <button
                     type="button"
                     onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
-                    className="flex h-12 w-full items-center justify-between rounded-xl border border-input bg-card/75 px-4 text-sm shadow-sm outline-none transition-all focus:border-primary/60 focus:ring-3 focus:ring-ring/20 text-left dark:bg-input/30"
+                    className="flex h-12 w-full items-center justify-between rounded-xl border border-input bg-card/75 px-4 text-left text-sm shadow-sm transition-all outline-none focus:border-primary/60 focus:ring-3 focus:ring-ring/20 dark:bg-input/30"
                   >
-                    <span className={field.value ? "text-foreground" : "text-muted-foreground"}>
+                    <span
+                      className={
+                        field.value
+                          ? "text-foreground"
+                          : "text-muted-foreground"
+                      }
+                    >
                       {field.value || "Choose bank..."}
                     </span>
                     <ChevronDown className="size-4 text-muted-foreground" />
@@ -198,20 +334,20 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
                       }}
                     />
                     <div className="absolute top-[calc(100%+6px)] left-0 z-50 w-full rounded-2xl border border-border bg-popover p-2 shadow-lg shadow-slate-950/10 dark:shadow-slate-950/30">
-                      <div className="relative mb-2 flex items-center border-b border-border/60 pb-1.5 px-1.5 pt-0.5">
+                      <div className="relative mb-2 flex items-center border-b border-border/60 px-1.5 pt-0.5 pb-1.5">
                         <Search className="absolute left-3 size-4 text-muted-foreground" />
                         <input
                           type="text"
                           placeholder="Search bank..."
                           value={bankSearchQuery}
                           onChange={(e) => setBankSearchQuery(e.target.value)}
-                          className="h-9 w-full bg-transparent pl-8 pr-3 text-sm outline-none placeholder:text-muted-foreground"
+                          className="h-9 w-full bg-transparent pr-3 pl-8 text-sm outline-none placeholder:text-muted-foreground"
                           autoFocus
                         />
                       </div>
-                      <ul className="max-h-48 overflow-y-auto space-y-0.5">
+                      <ul className="max-h-48 space-y-0.5 overflow-y-auto">
                         {isLoadingBanks ? (
-                          <li className="px-2.5 py-3 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+                          <li className="flex items-center justify-center gap-1.5 px-2.5 py-3 text-center text-xs text-muted-foreground">
                             <Loader2 className="size-3 animate-spin text-primary" />
                             <span>Loading banks...</span>
                           </li>
@@ -228,7 +364,9 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
                               className="flex cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
                             >
                               <span>{bank.name}</span>
-                              {field.value === bank.name && <Check className="size-4 text-primary" />}
+                              {field.value === bank.name && (
+                                <Check className="size-4 text-primary" />
+                              )}
                             </li>
                           ))
                         ) : (
@@ -265,29 +403,38 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
           name="accountName"
           control={form.control}
           render={({ field, fieldState }) => (
-            <FormFieldShell label="Account name" error={fieldState.error?.message}>
+            <FormFieldShell
+              label="Account name"
+              error={fieldState.error?.message}
+            >
               <div className="relative">
                 <Input
                   {...field}
                   aria-invalid={Boolean(fieldState.error)}
-                  placeholder={resolvingAccount ? "Resolving name..." : "Account holder name"}
+                  placeholder={
+                    resolvingAccount
+                      ? "Resolving name..."
+                      : "Account holder name"
+                  }
                   autoComplete="off"
                   readOnly
                   disabled={resolvingAccount || !watchedBankCode}
                   className={cn(
-                    "h-12 rounded-xl px-4 bg-muted/20 cursor-not-allowed",
-                    resolvedName && "border-emerald-500/40 focus-visible:border-emerald-500/60 focus-visible:ring-emerald-500/20",
-                    resolveError && "border-rose-500/40 focus-visible:border-rose-500/60 focus-visible:ring-rose-500/20"
+                    "h-12 cursor-not-allowed rounded-xl bg-muted/20 px-4",
+                    resolvedName &&
+                      "border-emerald-500/40 focus-visible:border-emerald-500/60 focus-visible:ring-emerald-500/20",
+                    resolveError &&
+                      "border-rose-500/40 focus-visible:border-rose-500/60 focus-visible:ring-rose-500/20"
                   )}
                 />
                 {resolvingAccount && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="absolute top-1/2 right-4 flex -translate-y-1/2 items-center gap-1.5 text-xs text-muted-foreground">
                     <Loader2 className="size-3.5 animate-spin" />
                     <span>Verifying...</span>
                   </div>
                 )}
                 {resolvedName && !resolvingAccount && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-emerald-500">
+                  <div className="absolute top-1/2 right-4 flex -translate-y-1/2 items-center text-emerald-500">
                     <Check className="size-4" />
                   </div>
                 )}
@@ -317,7 +464,7 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
             >
               <textarea
                 {...field}
-                className="min-h-24 w-full resize-none rounded-xl border border-input bg-card/75 px-4 py-3 text-sm shadow-sm shadow-slate-950/5 outline-none transition-all focus-visible:border-primary/60 focus-visible:ring-3 focus-visible:ring-ring/20 dark:bg-input/30"
+                className="min-h-24 w-full resize-none rounded-xl border border-input bg-card/75 px-4 py-3 text-sm shadow-sm shadow-slate-950/5 transition-all outline-none focus-visible:border-primary/60 focus-visible:ring-3 focus-visible:ring-ring/20 dark:bg-input/30"
                 placeholder="Short note"
               />
             </FormFieldShell>
@@ -328,7 +475,13 @@ export function WithdrawalRequestForm({ framed = true }: { framed?: boolean }) {
           type="submit"
           loading={form.formState.isSubmitting}
           loadingText="Submitting..."
-          disabled={resolvingAccount || !resolvedName || form.formState.isSubmitting}
+          disabled={
+            resolvingAccount ||
+            !resolvedName ||
+            form.formState.isSubmitting ||
+            isOverBalance ||
+            walletBalance <= 0
+          }
         >
           Request withdrawal
         </SubmitButton>
