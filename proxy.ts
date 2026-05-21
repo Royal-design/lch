@@ -30,16 +30,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
-  let profile: { role: string; status: string } | null = null
+  let profile: { role: string; active_role?: string | null; status: string } | null = null
 
   if (user) {
     const { data } = await supabase
       .from("profiles")
-      .select("role, status")
+      .select("role, active_role, status")
       .eq("id", user.id)
       .single()
 
     profile = data
+    const activeRole = profile?.active_role ?? profile?.role
 
     if (profile?.status === "suspended") {
       return NextResponse.redirect(
@@ -50,15 +51,17 @@ export async function proxy(request: NextRequest) {
       )
     }
 
-    if (pathname.startsWith("/admin") && profile?.role !== "admin") {
+    if (pathname.startsWith("/admin") && activeRole !== "admin") {
       return NextResponse.redirect(new URL("/dashboard", request.url))
     }
   }
 
   // Logged in → block auth pages
   if (user && isAuthRoute) {
+    const activeRole = profile?.active_role ?? profile?.role
+
     return NextResponse.redirect(
-      new URL(profile?.role === "admin" ? "/admin" : "/dashboard", request.url)
+      new URL(activeRole === "admin" ? "/admin" : "/dashboard", request.url)
     )
   }
 

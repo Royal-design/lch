@@ -1,40 +1,62 @@
 "use client"
 
-import {
-  Bell,
-  Search,
-  Settings,
-  LogOut,
-  ChartNoAxesCombined,
-  Users,
-  CreditCard,
-  HandCoins,
-  Wallet,
-} from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { motion } from "framer-motion"
+import {
+  Bell,
+  ChartNoAxesCombined,
+  CreditCard,
+  HandCoins,
+  LogOut,
+  Search,
+  Settings,
+  Users,
+  Wallet,
+} from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
 import { adminNavItems } from "@/components/admin/admin-data"
+import { AdminHeaderSkeleton, SkeletonBlock } from "@/components/admin/admin-ui"
 import { LchLogo } from "@/components/lch-logo"
 import { ModeToggle } from "@/components/mode-toggle"
+import { ProfileDialog } from "@/components/profile-dialog"
 import { fetchCurrentProfile } from "@/components/profile-query"
+import { RoleSwitcher } from "@/components/role-switcher"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/useAuthStore"
 import { useEffect } from "react"
-import { ProfileDialog } from "@/components/profile-dialog"
-import { AdminHeaderSkeleton, SkeletonBlock } from "@/components/admin/admin-ui"
 
 const mobileAdminItems = [
-  { href: "/admin", label: "Overview", shortLabel: "Home", icon: ChartNoAxesCombined },
+  {
+    href: "/admin",
+    label: "Overview",
+    shortLabel: "Home",
+    icon: ChartNoAxesCombined,
+  },
   { href: "/admin/users", label: "Users", shortLabel: "Users", icon: Users },
-  { href: "/admin/transactions", label: "Transactions", shortLabel: "Ledger", icon: CreditCard, isCenter: true },
-  { href: "/admin/contributions", label: "Contributions", shortLabel: "Contrib", icon: HandCoins },
-  { href: "/admin/withdrawals", label: "Withdrawals", shortLabel: "Payouts", icon: Wallet },
+  {
+    href: "/admin/transactions",
+    label: "Transactions",
+    shortLabel: "Ledger",
+    icon: CreditCard,
+    isCenter: true,
+  },
+  {
+    href: "/admin/contributions",
+    label: "Contributions",
+    shortLabel: "Contrib",
+    icon: HandCoins,
+  },
+  {
+    href: "/admin/withdrawals",
+    label: "Withdrawals",
+    shortLabel: "Payouts",
+    icon: Wallet,
+  },
 ]
 
 function isActive(pathname: string, href: string) {
@@ -78,7 +100,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (!initialized || (loading && !user) || !user || role !== "admin") {
     return (
-      <div className="min-h-svh bg-[radial-gradient(circle_at_top_left,oklch(0.94_0.035_155),transparent_32rem),linear-gradient(180deg,var(--background),var(--muted))] p-4 dark:bg-[radial-gradient(circle_at_top_left,oklch(0.23_0.05_155),transparent_30rem),linear-gradient(180deg,var(--background),oklch(0.12_0.018_245))] sm:p-6 lg:p-8">
+      <div className="min-h-svh bg-[radial-gradient(circle_at_top_left,oklch(0.94_0.035_155),transparent_32rem),linear-gradient(180deg,var(--background),var(--muted))] p-4 sm:p-6 lg:p-8 dark:bg-[radial-gradient(circle_at_top_left,oklch(0.23_0.05_155),transparent_30rem),linear-gradient(180deg,var(--background),oklch(0.12_0.018_245))]">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
             <div className="hidden space-y-4 rounded-[1.35rem] border border-sidebar-border bg-sidebar p-4 lg:block">
@@ -123,7 +145,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             Financial operations, risk review, and platform performance.
           </p>
         </div>
-        <nav className="mt-5 flex-1 space-y-1 overflow-y-auto thin-scrollbar">
+        <nav className="thin-scrollbar mt-5 flex-1 space-y-1 overflow-y-auto">
           {adminNavItems
             .filter(
               (item) =>
@@ -180,7 +202,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <div className="lg:hidden">
               <ProfileDialog>
                 <Avatar className="size-10 cursor-pointer border border-border shadow-sm shadow-slate-950/5 transition-transform hover:scale-105">
-                  {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
+                  {avatarUrl ? (
+                    <AvatarImage src={avatarUrl} alt={displayName} />
+                  ) : null}
                   <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
                     {initials}
                   </AvatarFallback>
@@ -188,9 +212,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </ProfileDialog>
             </div>
             <div className="hidden lg:block">
-              <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
-                Leenah Contribution Home
-              </p>
               <h1 className="text-xl font-bold tracking-tight">
                 Admin financial control center
               </h1>
@@ -204,6 +225,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 />
               </div>
               <ModeToggle />
+              <RoleSwitcher compact />
               <Button variant="outline" size="icon" className="rounded-xl">
                 <Bell className="size-4" />
                 <span className="sr-only">Notifications</span>
@@ -211,7 +233,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <div className="hidden lg:block">
                 <ProfileDialog>
                   <Avatar className="size-10 cursor-pointer border border-border transition-transform hover:scale-105">
-                    {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
+                    {avatarUrl ? (
+                      <AvatarImage src={avatarUrl} alt={displayName} />
+                    ) : null}
                     <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
                       {initials}
                     </AvatarFallback>
@@ -221,7 +245,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-xl inline-flex"
+                className="inline-flex rounded-xl"
                 onClick={signOut}
               >
                 <LogOut className="size-4" />
@@ -274,7 +298,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   className="relative flex h-full flex-col items-center justify-end pb-1.5"
                 >
-                  <Link href={item.href} className="absolute -top-[1.65rem] z-20">
+                  <Link
+                    href={item.href}
+                    className="absolute -top-[1.65rem] z-20"
+                  >
                     <motion.div
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.92 }}
@@ -322,7 +349,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       : "text-muted-foreground/80 group-hover:bg-accent group-hover:text-accent-foreground"
                   )}
                 >
-                  <Icon className="size-[1.15rem]" strokeWidth={active ? 2.4 : 2} />
+                  <Icon
+                    className="size-[1.15rem]"
+                    strokeWidth={active ? 2.4 : 2}
+                  />
                 </motion.span>
                 <span className="relative z-10 max-w-full truncate tracking-wide">
                   {item.shortLabel}

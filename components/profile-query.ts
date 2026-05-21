@@ -6,6 +6,8 @@ export type CurrentProfile = {
   email: string
   phone: string | null
   role: string
+  active_role?: string | null
+  roles?: string[]
   status: "active" | "suspended"
   avatar_url: string | null
   created_at?: string

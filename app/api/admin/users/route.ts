@@ -17,9 +17,11 @@ export async function GET() {
       email,
       phone,
       role,
+      active_role,
       status,
       created_at,
-      wallets (balance, locked_balance)
+      wallets (balance, locked_balance),
+      user_roles (role_name)
     `
     )
     .order("created_at", { ascending: false })

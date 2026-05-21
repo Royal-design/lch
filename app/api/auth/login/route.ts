@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, full_name, email, phone, role, status, avatar_url")
+      .select("id, full_name, email, phone, role, active_role, status, avatar_url")
       .eq("id", data.user.id)
       .single()
 
@@ -58,10 +58,28 @@ export async function POST(req: NextRequest) {
       .update({ last_sign_in_at: new Date().toISOString() })
       .eq("id", data.user.id)
 
+    const { data: roleRows } = await supabase
+      .from("user_roles")
+      .select("role_name")
+      .eq("user_id", data.user.id)
+
+    const roles = roleRows?.map((role) => role.role_name) ?? [
+      profile.active_role ?? profile.role,
+    ]
+    const activeRole = profile.active_role ?? profile.role
+
     const response = NextResponse.json({
       message: "Login successful",
-      user: profile,
-      redirectTo: profile.role === "admin" ? "/admin" : "/dashboard",
+      user: { ...profile, roles, active_role: activeRole },
+      roles,
+      activeRole,
+      requiresRoleSelection: roles.length > 1,
+      redirectTo:
+        roles.length > 1
+          ? null
+          : activeRole === "admin"
+            ? "/admin"
+            : "/dashboard",
     })
 
     return response

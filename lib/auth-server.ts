@@ -13,7 +13,7 @@ export async function getCurrentUserProfile() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, email, phone, role, status, avatar_url, created_at, updated_at")
+    .select("id, full_name, email, phone, role, active_role, status, avatar_url, created_at, updated_at")
     .eq("id", user.id)
     .single()
 
@@ -42,7 +42,7 @@ export async function requireAdmin() {
     return context
   }
 
-  if (context.profile?.role !== "admin") {
+  if ((context.profile?.active_role ?? context.profile?.role) !== "admin") {
     return { ...context, error: "Admin access required", status: 403 }
   }
 

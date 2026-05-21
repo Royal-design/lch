@@ -8,18 +8,34 @@ import {
   DepositFlowChart,
   DepositWithdrawalChart,
 } from "@/components/admin/admin-charts"
-import { getAdminData } from "@/components/admin/admin-data"
 import { AdminPageHeader, AdminPageSkeleton } from "@/components/admin/admin-ui"
 import { Card, CardContent } from "@/components/ui/card"
+import { apiRequest } from "@/lib/api-client"
 
-const insights = [
-  ["Highest contributing month", "May 2026", "NGN 34.8M inflow"],
-  ["Top performing users", "Amina Yusuf", "98 consistency score"],
-  ["Most active plan type", "Ajo group", "62% of new plans"],
-]
+type AnalyticsResponse = {
+  flowData: {
+    day: string
+    deposits: number
+    withdrawals: number
+    users: number
+    contributions: number
+  }[]
+  insights: {
+    label: string
+    value: string
+    caption: string
+  }[]
+}
+
+async function fetchAnalytics() {
+  return apiRequest<AnalyticsResponse>("/api/admin/analytics")
+}
 
 export default function AdminAnalyticsPage() {
-  const { data } = useQuery({ queryKey: ["admin-analytics"], queryFn: getAdminData })
+  const { data } = useQuery({
+    queryKey: ["admin-analytics"],
+    queryFn: fetchAnalytics,
+  })
 
   if (!data) return <AdminPageSkeleton variant="overview" />
 
@@ -31,7 +47,7 @@ export default function AdminAnalyticsPage() {
         description="Analyze active users, inflow, withdrawals, savings growth rate, and retention signals."
       />
       <div className="grid gap-4 md:grid-cols-3">
-        {insights.map(([label, value, caption]) => (
+        {data.insights.map(({ label, value, caption }) => (
           <Card key={label} className="fintech-surface rounded-[1.35rem]">
             <CardContent className="p-5">
               <p className="text-sm font-semibold text-muted-foreground">{label}</p>

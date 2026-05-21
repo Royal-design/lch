@@ -119,13 +119,22 @@ export const userStatusUpdateSchema = z.object({
   status: z.enum(["active", "suspended"]),
 })
 
+const roleNameSchema = z
+  .string()
+  .min(2, "Choose a valid role")
+  .max(40, "Role name is too long")
+  .regex(/^[a-z][a-z0-9_]*$/, "Choose a valid role")
+
 export const userRoleUpdateSchema = z.object({
-  role: z
-    .string()
-    .min(2, "Choose a valid role")
-    .max(40, "Role name is too long")
-    .regex(/^[a-z][a-z0-9_]*$/, "Choose a valid role"),
+  role: roleNameSchema.optional(),
+  roles: z.array(roleNameSchema).min(1, "Choose at least one role").max(10).optional(),
 })
+  .refine((value) => value.role || value.roles?.length, {
+    message: "Choose at least one role",
+  })
+  .transform((value) => ({
+    roles: Array.from(new Set(value.roles ?? [value.role!])),
+  }))
 
 export const roleCreateSchema = z.object({
   name: z

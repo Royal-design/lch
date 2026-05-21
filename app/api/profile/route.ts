@@ -12,7 +12,20 @@ export async function GET() {
     return NextResponse.json({ error: context.error }, { status: context.status })
   }
 
-  return NextResponse.json({ profile: context.profile })
+  const { data: roles } = await context.supabase
+    .from("user_roles")
+    .select("role_name")
+    .eq("user_id", context.user?.id)
+
+  return NextResponse.json({
+    profile: {
+      ...context.profile,
+      roles:
+        roles?.map((role) => role.role_name) ?? [
+          context.profile?.active_role ?? context.profile?.role ?? "user",
+        ],
+    },
+  })
 }
 
 export async function PATCH(request: NextRequest) {
@@ -41,7 +54,7 @@ export async function PATCH(request: NextRequest) {
       avatar_url: avatarUrl || null,
     })
     .eq("id", context.user.id)
-    .select("id, full_name, email, phone, role, status, avatar_url, created_at, updated_at")
+    .select("id, full_name, email, phone, role, active_role, status, avatar_url, created_at, updated_at")
     .single()
 
   if (error) {
@@ -59,7 +72,20 @@ export async function PATCH(request: NextRequest) {
     },
   })
 
-  return NextResponse.json({ profile: data })
+  const { data: roles } = await context.supabase
+    .from("user_roles")
+    .select("role_name")
+    .eq("user_id", context.user.id)
+
+  return NextResponse.json({
+    profile: {
+      ...data,
+      roles:
+        roles?.map((role) => role.role_name) ?? [
+          data.active_role ?? data.role,
+        ],
+    },
+  })
 }
 
 export async function DELETE() {

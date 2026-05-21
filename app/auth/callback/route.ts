@@ -76,7 +76,7 @@ async function resolveRedirect(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, status")
+    .select("role, active_role, status")
     .eq("id", user.id)
     .single()
 
@@ -85,5 +85,7 @@ async function resolveRedirect(
     return "/login?error=account-suspended"
   }
 
-  return profile?.role === "admin" ? "/admin" : "/dashboard"
+  return (profile?.active_role ?? profile?.role) === "admin"
+    ? "/admin"
+    : "/dashboard"
 }

@@ -19,13 +19,141 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: auth.error }, { status: auth.status })
   }
 
+  const supabase = createAdminClient()
+
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Admin service client is not configured" },
+      { status: 500 }
+    )
+  }
+
   const { id } = await context.params
   const body = await readRequestBody(request)
   const action = new URL(request.url).searchParams.get("action")
-  const validationResult =
-    action === "role"
-      ? userRoleUpdateSchema.safeParse(body)
-      : userStatusUpdateSchema.safeParse(body)
+
+  if (action === "role") {
+    const validationResult = userRoleUpdateSchema.safeParse(body)
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: validationResult.error.issues[0].message },
+        { status: 400 }
+      )
+    }
+
+    const selectedRoles = validationResult.data.roles
+    const { data: existingRoles, error: rolesError } = await supabase
+      .from("roles")
+      .select("name")
+      .in("name", selectedRoles)
+
+    if (rolesError || (existingRoles?.length ?? 0) !== selectedRoles.length) {
+      return NextResponse.json(
+        { error: "Choose existing roles" },
+        { status: 400 }
+      )
+    }
+
+    const { data: currentProfile, error: currentProfileError } = await supabase
+      .from("profiles")
+      .select("active_role")
+      .eq("id", id)
+      .single()
+
+    if (currentProfileError) {
+      return NextResponse.json(
+        { error: "Unable to update user" },
+        { status: 500 }
+      )
+    }
+
+    const { data: currentAssignments, error: assignmentsError } = await supabase
+      .from("user_roles")
+      .select("role_name")
+      .eq("user_id", id)
+
+    if (assignmentsError) {
+      return NextResponse.json(
+        { error: "Unable to update user roles" },
+        { status: 500 }
+      )
+    }
+
+    const currentActiveRole =
+      typeof currentProfile.active_role === "string"
+        ? currentProfile.active_role
+        : null
+    const activeRole = currentActiveRole && selectedRoles.includes(currentActiveRole)
+      ? currentActiveRole
+      : selectedRoles[0]
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        role: activeRole,
+        active_role: activeRole,
+      })
+      .eq("id", id)
+      .select("id, full_name, email, phone, role, active_role, status, created_at")
+      .single()
+
+    if (error) {
+      return NextResponse.json(
+        { error: "Unable to update user" },
+        { status: 500 }
+      )
+    }
+
+    const { error: upsertRolesError } = await supabase.from("user_roles").upsert(
+      selectedRoles.map((roleName) => ({
+        user_id: data.id,
+        role_name: roleName,
+      })),
+      { onConflict: "user_id,role_name" }
+    )
+
+    if (upsertRolesError) {
+      return NextResponse.json(
+        { error: "Unable to update user roles" },
+        { status: 500 }
+      )
+    }
+
+    const rolesToRemove =
+      currentAssignments
+        ?.map((assignment) => assignment.role_name)
+        .filter((roleName) => !selectedRoles.includes(roleName)) ?? []
+
+    if (rolesToRemove.length > 0) {
+      const { error: deleteRolesError } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", id)
+        .in("role_name", rolesToRemove)
+
+      if (deleteRolesError) {
+        return NextResponse.json(
+          { error: "Unable to update user roles" },
+          { status: 500 }
+        )
+      }
+    }
+
+    await createSystemNotification({
+      userId: data.id,
+      title: "Roles changed",
+      message: `Your account roles were updated to ${selectedRoles.join(", ")}.`,
+      email: {
+        to: data.email,
+        subject: "Your LCH account roles changed",
+      },
+    })
+
+    return NextResponse.json({ user: data })
+  }
+
+  const validationResult = userStatusUpdateSchema.safeParse(body)
 
   if (!validationResult.success) {
     return NextResponse.json(
@@ -34,31 +162,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     )
   }
 
-  const update =
-    action === "role"
-      ? { role: userRoleUpdateSchema.parse(body).role }
-      : { status: userStatusUpdateSchema.parse(body).status }
-
-  if (action === "role") {
-    const { data: role } = await auth.supabase
-      .from("roles")
-      .select("name")
-      .eq("name", update.role)
-      .single()
-
-    if (!role) {
-      return NextResponse.json(
-        { error: "Choose an existing role" },
-        { status: 400 }
-      )
-    }
-  }
-
-  const { data, error } = await auth.supabase
+  const { data, error } = await supabase
     .from("profiles")
-    .update(update)
+    .update({ status: validationResult.data.status })
     .eq("id", id)
-    .select("id, full_name, email, phone, role, status, created_at")
+    .select("id, full_name, email, phone, role, active_role, status, created_at")
     .single()
 
   if (error) {
@@ -68,32 +176,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     )
   }
 
-  if (action === "role") {
-    await createSystemNotification({
-      userId: data.id,
-      title: "Role changed",
-      message: `Your account role was changed to ${data.role}.`,
-      email: {
-        to: data.email,
-        subject: "Your LCH account role changed",
-      },
-    })
-  } else {
-    const statusLabel = data.status === "suspended" ? "suspended" : "activated"
+  const statusLabel = data.status === "suspended" ? "suspended" : "activated"
 
-    await createSystemNotification({
-      userId: data.id,
-      title: data.status === "suspended" ? "Account suspended" : "Account activated",
-      message:
-        data.status === "suspended"
-          ? "Your LCH account has been suspended. Contact support if you think this was a mistake."
-          : "Your LCH account has been activated again.",
-      email: {
-        to: data.email,
-        subject: `Your LCH account was ${statusLabel}`,
-      },
-    })
-  }
+  await createSystemNotification({
+    userId: data.id,
+    title: data.status === "suspended" ? "Account suspended" : "Account activated",
+    message:
+      data.status === "suspended"
+        ? "Your LCH account has been suspended. Contact support if you think this was a mistake."
+        : "Your LCH account has been activated again.",
+    email: {
+      to: data.email,
+      subject: `Your LCH account was ${statusLabel}`,
+    },
+  })
 
   return NextResponse.json({ user: data })
 }

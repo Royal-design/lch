@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/store/useAuthStore"
 import { ProfileDialog } from "@/components/profile-dialog"
+import { RoleSwitcher } from "@/components/role-switcher"
 import { MobileNavBar } from "@/components/mobile-nav-bar"
 
 const navItems = [
@@ -219,6 +220,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex items-center gap-2">
               <ModeToggle />
+              <RoleSwitcher compact />
               <Button variant="outline" size="icon" className="rounded-xl">
                 <Bell className="size-4" />
                 <span className="sr-only">Notifications</span>

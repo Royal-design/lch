@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { AlertTriangle, Loader2, Search, Shield, Trash2, UserCheck, UserX } from "lucide-react"
+import { AlertTriangle, Check, Loader2, Search, Shield, Trash2, UserCheck, UserX } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
@@ -35,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { apiRequest } from "@/lib/api-client"
+import { useAuthStore } from "@/store/useAuthStore"
 
 interface Profile {
   id: string
@@ -42,6 +43,7 @@ interface Profile {
   email: string
   phone: string | null
   role: string
+  active_role?: string | null
   status: string
   created_at: string
 }
@@ -54,6 +56,7 @@ interface Role {
 
 interface ProfileWithWallet extends Profile {
   wallets: { balance: number; locked_balance: number }[] | null
+  user_roles?: { role_name: string }[] | null
 }
 
 const USERS_PAGE_SIZE = 20
@@ -80,12 +83,12 @@ async function updateUserStatus(
   return true
 }
 
-async function updateUserRole(userId: string, role: string): Promise<boolean> {
+async function updateUserRoles(userId: string, roles: string[]): Promise<boolean> {
   await apiRequest(`/api/admin/users/${userId}?action=role`, {
     method: "PATCH",
-    body: JSON.stringify({ role }),
+    body: JSON.stringify({ roles }),
   })
-  toast.success("Role updated successfully")
+  toast.success("Roles updated successfully")
   return true
 }
 
@@ -113,8 +116,17 @@ function formatDate(dateString: string): string {
   })
 }
 
+function getUserRoleNames(user: ProfileWithWallet): string[] {
+  const assignedRoles = user.user_roles?.map((role) => role.role_name).filter(Boolean) ?? []
+  const fallbackRole = user.active_role ?? user.role
+  const roleNames = assignedRoles.length > 0 ? assignedRoles : [fallbackRole]
+
+  return Array.from(new Set(roleNames))
+}
+
 export default function AdminUsersPage() {
   const queryClient = useQueryClient()
+  const { user: currentUser, refreshAuth } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [roleFilter, setRoleFilter] = useState("all")
@@ -125,7 +137,7 @@ export default function AdminUsersPage() {
   const [actionDialog, setActionDialog] = useState<"status" | "role" | "delete" | null>(
     null
   )
-  const [selectedRole, setSelectedRole] = useState("")
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
 
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -153,14 +165,18 @@ export default function AdminUsersPage() {
   })
 
   const roleMutation = useMutation({
-    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
-      updateUserRole(userId, role),
-    onSuccess: (success) => {
+    mutationFn: ({ userId, roles }: { userId: string; roles: string[] }) =>
+      updateUserRoles(userId, roles),
+    onSuccess: async (success, variables) => {
       if (success) {
         queryClient.invalidateQueries({ queryKey: ["admin-users"] })
+        queryClient.invalidateQueries({ queryKey: ["profile"] })
+        if (variables.userId === currentUser?.id) {
+          await refreshAuth()
+        }
         setSelectedUser(null)
         setActionDialog(null)
-        setSelectedRole("")
+        setSelectedRoles([])
       }
     },
     onError: (error) => {
@@ -194,7 +210,9 @@ export default function AdminUsersPage() {
         const matchesStatus =
           statusFilter === "all" || user.status === statusFilter
 
-        const matchesRole = roleFilter === "all" || user.role === roleFilter
+        const assignedRoles = getUserRoleNames(user)
+        const matchesRole =
+          roleFilter === "all" || assignedRoles.includes(roleFilter)
 
         return matchesSearch && matchesStatus && matchesRole
       }),
@@ -216,7 +234,7 @@ export default function AdminUsersPage() {
 
   const handleRoleAction = (user: ProfileWithWallet) => {
     setSelectedUser(user)
-    setSelectedRole(user.role)
+    setSelectedRoles(getUserRoleNames(user))
     setActionDialog("role")
   }
 
@@ -233,10 +251,21 @@ export default function AdminUsersPage() {
   }
 
   const confirmRoleChange = () => {
-    if (!selectedUser || !selectedRole) return
+    if (!selectedUser || selectedRoles.length === 0) return
 
-    roleMutation.mutate({ userId: selectedUser.id, role: selectedRole })
+    roleMutation.mutate({ userId: selectedUser.id, roles: selectedRoles })
   }
+
+  const toggleSelectedRole = (roleName: string) => {
+    setSelectedRoles((current) =>
+      current.includes(roleName)
+        ? current.filter((item) => item !== roleName)
+        : [...current, roleName]
+    )
+  }
+
+  const getRoleLabel = (roleName: string) =>
+    roles.find((role) => role.name === roleName)?.display_name || roleName
 
   const confirmDeleteUser = () => {
     if (!selectedUser) return
@@ -319,100 +348,108 @@ export default function AdminUsersPage() {
                   <TableHead>Phone</TableHead>
                   <TableHead>Balance</TableHead>
                   <TableHead>Locked</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Roles</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-semibold">
-                      {user.full_name || "N/A"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {user.email}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {user.phone || "-"}
-                    </TableCell>
-                    <TableCell>
-                      {formatCurrency(user.wallets?.[0]?.balance || 0)}
-                    </TableCell>
-                    <TableCell>
-                      {formatCurrency(user.wallets?.[0]?.locked_balance || 0)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          user.role === "admin"
-                            ? "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-400/15 dark:bg-purple-400/10 dark:text-purple-200"
-                            : ""
-                        }
-                      >
-                        {roles.find((r) => r.name === user.role)
-                          ?.display_name || user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          user.status === "active"
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-200"
-                            : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/15 dark:bg-rose-400/10 dark:text-rose-200"
-                        }
-                      >
-                        {user.status === "active" ? "Active" : "Suspended"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(user.created_at)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
+                {paginatedUsers.map((user) => {
+                  const userRoleNames = getUserRoleNames(user)
+
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-semibold">
+                        {user.full_name || "N/A"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {user.email}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {user.phone || "-"}
+                      </TableCell>
+                      <TableCell>
+                        {formatCurrency(user.wallets?.[0]?.balance || 0)}
+                      </TableCell>
+                      <TableCell>
+                        {formatCurrency(user.wallets?.[0]?.locked_balance || 0)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex max-w-[20rem] flex-wrap gap-1.5">
+                          {userRoleNames.map((roleName) => (
+                            <Badge
+                              key={roleName}
+                              variant="outline"
+                              className={
+                                roleName === "admin"
+                                  ? "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-400/15 dark:bg-purple-400/10 dark:text-purple-200"
+                                  : ""
+                              }
+                            >
+                              {getRoleLabel(roleName)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
                           variant="outline"
-                          size="sm"
-                          onClick={() => handleStatusAction(user)}
-                          className="rounded-xl"
+                          className={
+                            user.status === "active"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-200"
+                              : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/15 dark:bg-rose-400/10 dark:text-rose-200"
+                          }
                         >
-                          {user.status === "active" ? (
-                            <>
-                              <UserX className="size-3.5" />
-                              Suspend
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="size-3.5" />
-                              Activate
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRoleAction(user)}
-                          className="rounded-xl"
-                        >
-                          <Shield className="size-3.5" />
-                          Role
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteAction(user)}
-                          className="rounded-xl"
-                        >
-                          <Trash2 className="size-3.5" />
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {user.status === "active" ? "Active" : "Suspended"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatDate(user.created_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusAction(user)}
+                            className="rounded-xl"
+                          >
+                            {user.status === "active" ? (
+                              <>
+                                <UserX className="size-3.5" />
+                                Suspend
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="size-3.5" />
+                                Activate
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRoleAction(user)}
+                            className="rounded-xl"
+                          >
+                            <Shield className="size-3.5" />
+                            Roles
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteAction(user)}
+                            className="rounded-xl"
+                          >
+                            <Trash2 className="size-3.5" />
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
                 {filteredUsers.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={9} className="h-24 text-center">
@@ -555,33 +592,79 @@ export default function AdminUsersPage() {
         onOpenChange={(open) => {
           if (!open) {
             setActionDialog(null)
-            setSelectedRole("")
+            setSelectedRoles([])
           }
         }}
       >
         <DialogContent className="rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Change User Role</DialogTitle>
+            <DialogTitle>Change User Roles</DialogTitle>
             <DialogDescription>
-              Update the role for {selectedUser?.full_name} (
+              Select every role for {selectedUser?.full_name} (
               {selectedUser?.email})
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 px-6 py-4">
             <div className="grid gap-2">
-              <Label>Select Role</Label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="rounded-xl">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.name}>
-                      {role.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Assigned roles</Label>
+              <div className="flex min-h-10 flex-wrap items-center gap-2 rounded-xl border border-border bg-muted/25 px-3 py-2">
+                {selectedRoles.length > 0 ? (
+                  selectedRoles.map((roleName) => (
+                    <Badge key={roleName} variant="secondary" className="gap-1.5 rounded-lg">
+                      {getRoleLabel(roleName)}
+                      <button
+                        type="button"
+                        onClick={() => toggleSelectedRole(roleName)}
+                        className="rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        aria-label={`Remove ${getRoleLabel(roleName)}`}
+                      >
+                        x
+                      </button>
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground">No roles selected</span>
+                )}
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Available roles</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {roles.map((role) => {
+                  const isSelected = selectedRoles.includes(role.name)
+
+                  return (
+                    <button
+                      key={role.id}
+                      type="button"
+                      onClick={() => toggleSelectedRole(role.name)}
+                      className={`flex min-h-14 items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left transition-colors focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:outline-none ${
+                        isSelected
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border bg-background hover:bg-muted/60"
+                      }`}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold">
+                          {role.display_name}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {role.name}
+                        </span>
+                      </span>
+                      <span
+                        className={`grid size-5 shrink-0 place-items-center rounded-md border ${
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border"
+                        }`}
+                      >
+                        {isSelected ? <Check className="size-3.5" /> : null}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -589,7 +672,7 @@ export default function AdminUsersPage() {
               variant="outline"
               onClick={() => {
                 setActionDialog(null)
-                setSelectedRole("")
+                setSelectedRoles([])
               }}
               className="rounded-xl"
             >
@@ -597,10 +680,10 @@ export default function AdminUsersPage() {
             </Button>
             <Button
               onClick={confirmRoleChange}
-              disabled={roleMutation.isPending || !selectedRole}
+              disabled={roleMutation.isPending || selectedRoles.length === 0}
               className="rounded-xl"
             >
-              {roleMutation.isPending ? "Saving..." : "Save Role"}
+              {roleMutation.isPending ? "Saving..." : "Save Roles"}
             </Button>
           </DialogFooter>
         </DialogContent>

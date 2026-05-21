@@ -27,7 +27,9 @@ import {
 import SocialLogin from "./social-login"
 
 type LoginResponse = {
-  redirectTo?: string
+  redirectTo?: string | null
+  requiresRoleSelection?: boolean
+  roles?: string[]
 }
 
 type ErrorResponse = {
@@ -37,6 +39,7 @@ type ErrorResponse = {
 export function LoginForm() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [roleOptions, setRoleOptions] = useState<string[]>([])
   const { user, role, loading, initialized, refreshAuth } = useAuthStore()
 
   useEffect(() => {
@@ -60,6 +63,12 @@ export function LoginForm() {
     try {
       const response = await axios.post<LoginResponse>("/api/auth/login", data)
 
+      if (response.data.requiresRoleSelection && response.data.roles?.length) {
+        setRoleOptions(response.data.roles)
+        toast.info("Choose how you want to continue.")
+        return
+      }
+
       toast.success("Login successful.")
       await refreshAuth()
       router.refresh()
@@ -67,6 +76,23 @@ export function LoginForm() {
     } catch (err) {
       const error = err as AxiosError<ErrorResponse>
       toast.error(error.response?.data?.error ?? "Unable to login")
+    }
+  }
+
+  const chooseRole = async (nextRole: string) => {
+    try {
+      const response = await axios.post<{ redirectTo: string }>(
+        "/api/auth/switch-role",
+        { role: nextRole }
+      )
+
+      toast.success(`Continuing as ${nextRole}.`)
+      await refreshAuth()
+      router.refresh()
+      router.replace(response.data.redirectTo)
+    } catch (err) {
+      const error = err as AxiosError<ErrorResponse>
+      toast.error(error.response?.data?.error ?? "Unable to switch role")
     }
   }
 
@@ -184,6 +210,24 @@ export function LoginForm() {
               </FieldDescription>
             </FieldGroup>
           </form>
+          {roleOptions.length > 1 ? (
+            <div className="mt-4 rounded-2xl border border-border/80 bg-muted/25 p-3">
+              <p className="text-sm font-semibold">Continue as</p>
+              <div className="mt-3 grid gap-2">
+                {roleOptions.map((item) => (
+                  <Button
+                    key={item}
+                    type="button"
+                    variant={item === "admin" ? "default" : "outline"}
+                    className="h-10 justify-start rounded-xl capitalize"
+                    onClick={() => chooseRole(item)}
+                  >
+                    {item.replaceAll("_", " ")}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : null}
       </FormCard>
     </div>
   )
